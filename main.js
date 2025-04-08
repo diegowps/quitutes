@@ -9,8 +9,9 @@ let dbcon = null
 // Importação de models 
 const TarefaModel = require('./src/models/Tarefa.js');
 const DespesaModel = require('./src/models/Despesa.js');
-// const EstoqueItemModel = require('./src/models/EstoqueItem.js');
-// const VendaModel = require('./src/models/Venda.js');
+const EstoqueItem = require('./src/models/EstoqueItem');
+const Venda = require('./src/models/Venda');
+const Receita = require('./src/models/Receita');
 
 
 // Janela Principal
@@ -305,3 +306,109 @@ ipcMain.on('close-about', () => {
 ipcMain.handle('open-file-dialog', async () => {
     // ... (código do CONEST para selecionar imagem) ...
 });
+
+const setupIpcHandlers = () => {
+    // Estoque handlers
+    ipcMain.handle('add-stock-item', async (_, itemData) => {
+        return await EstoqueItem.create(itemData);
+    });
+
+    ipcMain.handle('get-stock-items', async () => {
+        return await EstoqueItem.findAll();
+    });
+
+    ipcMain.handle('update-stock-item', async (_, { id, itemData }) => {
+        return await EstoqueItem.update(id, itemData);
+    });
+
+    ipcMain.handle('delete-stock-item', async (_, id) => {
+        return await EstoqueItem.delete(id);
+    });
+
+    // Receitas handlers
+    ipcMain.handle('add-receita', async (_, receitaData) => {
+        return await Receita.create(receitaData);
+    });
+
+    ipcMain.handle('get-receitas', async () => {
+        return await Receita.findAll();
+    });
+
+    ipcMain.handle('update-receita', async (_, { id, receitaData }) => {
+        return await Receita.update(id, receitaData);
+    });
+
+    ipcMain.handle('delete-receita', async (_, id) => {
+        return await Receita.delete(id);
+    });
+
+    // Vendas handlers
+    ipcMain.handle('add-venda', async (_, vendaData) => {
+        return await Venda.create(vendaData);
+    });
+
+    ipcMain.handle('get-vendas', async () => {
+        return await Venda.findAll();
+    });
+
+    ipcMain.handle('update-venda', async (_, { id, vendaData }) => {
+        return await Venda.update(id, vendaData);
+    });
+
+    ipcMain.handle('delete-venda', async (_, id) => {
+        return await Venda.delete(id);
+    });
+
+    // Despesas handlers
+    ipcMain.handle('add-despesa', async (_, despesaData) => {
+        return await Despesa.create(despesaData);
+    });
+
+    ipcMain.handle('get-despesas', async () => {
+        return await Despesa.findAll();
+    });
+
+    ipcMain.handle('update-despesa', async (_, { id, despesaData }) => {
+        return await Despesa.update(id, despesaData);
+    });
+
+    ipcMain.handle('delete-despesa', async (_, id) => {
+        return await Despesa.delete(id);
+    });
+
+    // Tarefas handlers
+    ipcMain.handle('add-tarefa', async (_, tarefaData) => {
+        return await Tarefa.create(tarefaData);
+    });
+
+    ipcMain.handle('get-tarefas', async () => {
+        return await Tarefa.findAll();
+    });
+
+    ipcMain.handle('update-tarefa', async (_, { id, tarefaData }) => {
+        return await Tarefa.update(id, tarefaData);
+    });
+
+    ipcMain.handle('delete-tarefa', async (_, id) => {
+        return await Tarefa.delete(id);
+    });
+};
+
+const checkPendingItems = async () => {
+    try {
+        const today = new Date();
+        const [pendingTasks, pendingPayments] = await Promise.all([
+            Tarefa.findPendentes(today),
+            Despesa.findPendentes(today)
+        ]);
+
+        if (pendingTasks.length > 0 || pendingPayments.length > 0) {
+            mainWindow.webContents.send('pending-items', {
+                tasks: pendingTasks,
+                payments: pendingPayments
+            });
+        }
+    } catch (error) {
+        console.error('Error checking pending items:', error);
+    }
+};
