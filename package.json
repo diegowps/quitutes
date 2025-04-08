@@ -23,6 +23,10 @@
     "mongoose": "^8.13.2"
   },
   "dependencies": {
-    "jspdf": "^3.0.1"
+    "jspdf": "^3.0.1",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.14.0",
+    "promise": "^8.3.0",
+    "promise2": "^1.1.3"
   }
 }
