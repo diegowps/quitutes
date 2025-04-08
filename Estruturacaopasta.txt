@@ -1,0 +1,31 @@
+Modelo base de estruturação de pasta
+
+jasbd-system/
+├── main.js                 # Processo Principal do Electron 
+├── preload.js              # Script de pré-carregamento 
+├── database.js             # Lógica de conexão com o banco (similar ao CONEST por enquanto --- Precisa ser adaptado ao banco que será usado ( mysql ))
+├── package.json            # Dependências e scripts do projeto
+├── node_modules/           # Dependências instaladas
+├── uploads/                # Pasta para imagens de produtos (se for o caso)
+└── src/
+    ├── models/             # Schemas usando o mongoose
+    │   ├── EstoqueItem.js
+    │   ├── Receita.js
+    │   ├── Venda.js
+    │   ├── Despesa.js
+    │   ├── Tarefa.js
+    ├── views/              # Arquivos HTML, CSS, JS do Renderer
+    │   ├── index.html      # Janela principal (shell)
+    │   ├── css/
+    │   │   └── style.css   # Estilos principais
+    │   ├── js/
+    │   │   └── renderer.js # Lógica principal do renderer
+    │   ├── partials/       # (Opcional) Componentes/telas parciais
+    │   │   ├── estoque.html
+    │   │   ├── producao.html
+    │   │   ├── vendas.html
+    │   │   ├── financeiro.html
+    │   │   ├── relatorios.html
+    │   │   └── tarefas.html
+    │   └── assets/         # Imagens, fontes, etc.
+    └── assets/             # (Opcional) Ícones, etc. para o app

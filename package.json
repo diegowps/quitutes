@@ -1,0 +1,24 @@
+{
+  "name": "quitutes",
+  "version": "1.0.0",
+  "description": "JASBD System - Time SENAC de Desenvolvimento (Projeto integrador)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diegowps/quitutes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/diegowps/quitutes/issues"
+  },
+  "homepage": "https://github.com/diegowps/quitutes#readme",
+  "devDependencies": {
+    "electron": "^35.1.4",
+    "mongoose": "^8.13.2"
+  }
+}
