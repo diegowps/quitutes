@@ -208,9 +208,18 @@ app.whenReady().then(async () => {
     try {
         dbcon = await dbConnect();
         console.log("Banco de dados conectado com sucesso.");
+        if (win) {
+            win.webContents.once('did-finish-load', () => {
+                win.webContents.send('db-connection-status', { connected: true });
+            });
+        }
     } catch (error) {
         console.error("Falha ao conectar ao banco de dados:", error);
-        // Mostrar um erro crítico para o usuário e talvez sair
+        if (win) {
+            win.webContents.once('did-finish-load', () => {
+                win.webContents.send('db-connection-status', { connected: false });
+            });
+        }
         dialog.showErrorBox("Erro Crítico de Banco de Dados", "Não foi possível conectar ao banco de dados. O aplicativo não pode continuar.\n\nDetalhes: " + error.message);
         app.quit();
         return; // Impede a criação da janela se o DB falhar

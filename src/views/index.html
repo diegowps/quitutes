@@ -84,6 +84,26 @@
         .no-notifications {
             color: #777;
         }
+
+        .db-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .db-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .db-status.connected .db-icon {
+            color: green;
+        }
+
+        .db-status.disconnected .db-icon {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -94,6 +114,11 @@
         <div id="startup-notifications" class="notification-area" style="display: none;">
             <h2>Lembretes do Dia</h2>
             <div id="notification-message"></div>
+        </div>
+
+        <div id="db-status" class="db-status">
+            <span id="db-icon" class="db-icon">🔴</span>
+            <span id="db-message">Desconectado</span>
         </div>
 
         <div class="modules-grid">
@@ -119,6 +144,24 @@
 
             startupNotificationsDiv.style.display = 'block';
             notificationMessageDiv.innerText = data.message;
+        });
+
+        window.electronAPI.onDbConnectionStatus((status) => {
+            const dbStatusDiv = document.getElementById('db-status');
+            const dbIcon = document.getElementById('db-icon');
+            const dbMessage = document.getElementById('db-message');
+
+            if (status.connected) {
+                dbStatusDiv.classList.add('connected');
+                dbStatusDiv.classList.remove('disconnected');
+                dbIcon.textContent = '🟢';
+                dbMessage.textContent = 'Conectado';
+            } else {
+                dbStatusDiv.classList.add('disconnected');
+                dbStatusDiv.classList.remove('connected');
+                dbIcon.textContent = '🔴';
+                dbMessage.textContent = 'Desconectado';
+            }
         });
     </script>
 </body>
