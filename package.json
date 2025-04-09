@@ -19,8 +19,7 @@
   },
   "homepage": "https://github.com/diegowps/quitutes#readme",
   "devDependencies": {
-    "electron": "^35.1.4",
-    "mongoose": "^8.13.2"
+    "electron": "^35.1.4"
   },
   "dependencies": {
     "jspdf": "^3.0.1",
