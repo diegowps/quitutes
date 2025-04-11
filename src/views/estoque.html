@@ -4,76 +4,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestão de Estoque</title>
+  <title>Sistema de Estoque</title>
+  <link rel="stylesheet" href="../views/css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body>
-  <header>
-    <h1>Gestão de Estoque</h1>
-    <nav>
-      <ul>
-        <li><a href="#cadastro">Cadastro</a></li>
-        <li><a href="#entrada">Entrada</a></li>
-        <li><a href="#saida">Saída</a></li>
-        <li><a href="#compras">Compras</a></li>
-        <li><a href="#vencimento">Perto de Vencer</a></li>
-      </ul>
-    </nav>
-  </header>
+  <div class="main-screen">
 
-  <main>
-    <section id="cadastro">
-      <h2>Cadastro de Produto</h2>
-      <form id="formCadastro">
-        <label>Nome do Produto: <input type="text" name="nome_produto" /></label><br />
-        <label>Categoria: <input type="text" name="categoria" /></label><br />
-        <label>Quantidade: <input type="number" name="quantidade" /></label><br />
-        <label>Data de Validade: <input type="date" name="validade" /></label><br />
-        <button type="button" onclick="cadastrarProduto()">Cadastrar</button>
-      </form>
-    </section>
+    <div class="card-container">
+      <div class="icon-card" onclick="mostrarFormulario('cadastro')">
+        <i class="fas fa-plus"></i>
+        <span>Cadastro</span>
+      </div>
+      <div class="icon-card" onclick="mostrarFormulario('entrada')">
+        <i class="fas fa-arrow-down"></i>
+        <span>Entrada</span>
+      </div>
+      <div class="icon-card" onclick="mostrarFormulario('saida')">
+        <i class="fas fa-arrow-up"></i>
+        <span>Saída</span>
+      </div>
+      <div class="icon-card" onclick="mostrarFormulario('compras')">
+        <i class="fas fa-shopping-cart"></i>
+        <span>Compras</span>
+      </div>
+      <div class="icon-card" onclick="mostrarFormulario('vencimento')">
+        <i class="fas fa-clock"></i>
+        <span>Vencimento</span>
+      </div>
+    </div>
 
-    <section id="entrada">
-      <h2>Entrada de Produto</h2>
-      <form id="formEntrada">
-        <label>ID ou Nome do Produto: <input type="text" name="produto_entrada" /></label><br />
-        <label>Quantidade: <input type="number" name="quantidade_entrada" /></label><br />
-        <button type="button" onclick="registrarEntrada()">Registrar Entrada</button>
-      </form>
-    </section>
+    <div class="formulario-container">
+      <!-- Todos os formulários começam ocultos com a classe hidden -->
+      <section id="cadastro" class="form-section hidden">
+        <h2>Cadastro de Produto</h2>
+        <form>
+          <label>Nome do Produto: <input type="text" /></label>
+          <label>Categoria: <input type="text" /></label>
+          <label>Quantidade: <input type="number" /></label>
+          <label>Validade: <input type="date" /></label>
+          <button type="submit">Cadastrar</button>
+        </form>
+      </section>
 
-    <section id="saida">
-      <h2>Saída de Produto</h2>
-      <form id="formSaida">
-        <label>ID ou Nome do Produto: <input type="text" name="produto_saida" /></label><br />
-        <label>Quantidade: <input type="number" name="quantidade_saida" /></label><br />
-        <button type="button" onclick="registrarSaida()">Registrar Saída</button>
-      </form>
-    </section>
+      <section id="entrada" class="form-section hidden">
+        <h2>Entrada de Produto</h2>
+        <form>
+          <label>Produto: <input type="text" /></label>
+          <label>Quantidade: <input type="number" /></label>
+          <button type="submit">Registrar Entrada</button>
+        </form>
+      </section>
 
-    <section id="compras">
-      <h2>Registro de Compras</h2>
-      <form id="formCompras">
-        <label>Produto: <input type="text" name="produto_compra" /></label><br />
-        <label>Fornecedor: <input type="text" name="fornecedor" /></label><br />
-        <label>Quantidade: <input type="number" name="quantidade_compra" /></label><br />
-        <label>Data da Compra: <input type="date" name="data_compra" /></label><br />
-        <button type="button" onclick="registrarCompra()">Registrar Compra</button>
-      </form>
-    </section>
+      <section id="saida" class="form-section hidden">
+        <h2>Saída de Produto</h2>
+        <form>
+          <label>Produto: <input type="text" /></label>
+          <label>Quantidade: <input type="number" /></label>
+          <button type="submit">Registrar Saída</button>
+        </form>
+      </section>
 
-    <section id="vencimento">
-      <h2>Produtos Perto de Vencer</h2>
-      <form id="formVencimento">
-        <label>Data de Corte: <input type="date" name="data_corte" /></label><br />
-        <button type="button" onclick="verificarVencimento()">Verificar</button>
-      </form>
-    </section>
-  </main>
+      <section id="compras" class="form-section hidden">
+        <h2>Registro de Compras</h2>
+        <form>
+          <label>Produto: <input type="text" /></label>
+          <label>Fornecedor: <input type="text" /></label>
+          <label>Quantidade: <input type="number" /></label>
+          <label>Data da Compra: <input type="date" /></label>
+          <button type="submit">Registrar Compra</button>
+        </form>
+      </section>
 
-  <footer>
-    <p>&copy; 2025 - Sistema de Estoque</p>
-  </footer>
+      <section id="vencimento" class="form-section hidden">
+        <h2>Produtos Perto de Vencer</h2>
+        <form>
+          <label>Data de Corte: <input type="date" /></label>
+          <button type="submit">Verificar</button>
+        </form>
+      </section>
+    </div>
+  </div>
 
   <script src="estoque.js"></script>
 </body>
