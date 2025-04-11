@@ -1,168 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JASBD SYSTEM</title>
-
-    <!--Por enquanto deixar css de cada renderer no próprio renderer, depois integrar em arquivo 
-    CSS centralizado -->
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f4f4f4;
-        }
-
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        p {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .module-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .module-button:hover {
-            background-color: #0056b3;
-        }
-
-        .notification-area {
-            background-color: #e9ecef;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: left;
-            width: 80%;
-            max-width: 600px;
-        }
-
-        .notification-area h2 {
-            color: #333;
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }
-
-        .notification-area p {
-            color: #555;
-            margin-bottom: 5px;
-        }
-
-        .no-notifications {
-            color: #777;
-        }
-
-        .db-status {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        .db-icon {
-            margin-right: 10px;
-            font-size: 20px;
-        }
-
-        .db-status.connected .db-icon {
-            color: green;
-        }
-
-        .db-status.disconnected .db-icon {
-            color: red;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Gestão - Confeitaria</title>
+  <link rel="stylesheet" href="../pulbic/css/style/style.css" />
+  <!-- <link rel="stylesheet" href="../pulbic/css/bootstrap.min.css"> -->
+ 
 </head>
 <body>
-    <div class="container">
-        <h1>Bem-vindo ao JASBD SYSTEM</h1>
-        <p>Seu sistema de gestão integrado.</p>
+  <header>
+    <h1>Gestão de Confeitaria</h1>
+  </header>
 
-        <div id="startup-notifications" class="notification-area" style="display: none;">
-            <h2>Lembretes do Dia</h2>
-            <div id="notification-message"></div>
-        </div>
+  <nav class="menu">
+    <ul>
+      <li><a href="cadastro.html">Cadastro</a></li>
+      <li><a href="estoque.html">Estoque</a></li>
+      <li><a href="producao.html">Produção</a></li>
+      <li><a href="vendas.html">Vendas</a></li>
+      <li><a href="financeiro.html">Financeiro</a></li>
+      <li><a href="relatorio.html">Relatório</a></li>
+      <li><a href="tarefas.html">Tarefas</a></li>
+      <li><a href="#gerenciar-produtos">Gerenciar Produtos</a></li>
+    </ul>
+  </nav>
 
-        <div id="db-status" class="db-status">
-            <span id="db-icon" class="db-icon">🔴</span>
-            <span id="db-message">Desconectado</span>
-        </div>
+  <main>
+    <section class="dashboard-card">
+      <h2>Bem-vindo!</h2>
+      <p>Selecione uma opção no menu para começar a gerenciar sua confeitaria.</p>
+    </section>
 
-        <div class="modules-grid">
-            <button class="module-button" onclick="navigateTo('estoque')">Estoque</button>
-            <button class="module-button" onclick="navigateTo('producao')">Produção</button>
-            <button class="module-button" onclick="navigateTo('vendas')">Vendas</button>
-            <button class="module-button" onclick="navigateTo('financeiro')">Financeiro</button>
-            <button class="module-button" onclick="navigateTo('relatorios')">Relatórios</button>
-            <button class="module-button" onclick="navigateTo('tarefas')">Tarefas</button>
-        </div>
+    <section id="gerenciar-produtos" class="dashboard-card">
+      <h2>Gerenciar Produtos</h2>
+      <form id="produto-form">
+        <label for="nome-produto">Nome do Produto:</label>
+        <input type="text" id="nome-produto" name="nome-produto" required />
 
-        <p>&copy; 2025 JASBD SYSTEM</p>
-    </div>
+        <label for="preco-produto">Preço:</label>
+        <input type="number" id="preco-produto" name="preco-produto" step="0.01" required />
 
-    <script>
-        function navigateTo(viewName) {
-            window.electronAPI.navigateTo(viewName);
-        }
+        <button type="submit">Adicionar Produto</button>
+      </form>
 
-        window.electronAPI.onShowStartupNotification((data) => {
-            const startupNotificationsDiv = document.getElementById('startup-notifications');
-            const notificationMessageDiv = document.getElementById('notification-message');
+      <h3>Lista de Produtos</h3>
+      <table id="tabela-produtos">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Preço</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Produtos serão carregados aqui dinamicamente -->
+        </tbody>
+      </table>
+    </section>
+  </main>
 
-            startupNotificationsDiv.style.display = 'block';
-            notificationMessageDiv.innerText = data.message;
-        });
+  <footer>
+    <p>&copy; 2025 Sistema de Gestão para Confeitarias</p>
+  </footer>
 
-        window.electronAPI.onDbConnectionStatus((status) => {
-            const dbStatusDiv = document.getElementById('db-status');
-            const dbIcon = document.getElementById('db-icon');
-            const dbMessage = document.getElementById('db-message');
-
-            if (status.connected) {
-                dbStatusDiv.classList.add('connected');
-                dbStatusDiv.classList.remove('disconnected');
-                dbIcon.textContent = '🟢';
-                dbMessage.textContent = 'Conectado';
-            } else {
-                dbStatusDiv.classList.add('disconnected');
-                dbStatusDiv.classList.remove('connected');
-                dbIcon.textContent = '🔴';
-                dbMessage.textContent = 'Desconectado';
-            }
-        });
-    </script>
+  <script src="../pulbic/js/bootstrap.min.js"></script>
+  <script src="gerenciar-produtos.js"></script>
 </body>
 </html>
