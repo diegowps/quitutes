@@ -1,0 +1,13 @@
+{
+  "name": "quitutes",
+  "version": "1.0.0",
+  "description": "Web app for Quitutes with Express and MySQL integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.3.0"
+  }
+}

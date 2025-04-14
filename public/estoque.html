@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Estoque - Quitutes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Quitutes</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="estoque.html">Gestão de Estoque</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Gestão de Estoque</h1>
+
+        <form id="estoque-form" class="mb-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" id="produto" class="form-control" placeholder="Nome do Produto" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" id="quantidade" class="form-control" placeholder="Quantidade" required>
+                </div>
+                <div class="col-md-3">
+                    <select id="tipo" class="form-select" required>
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saída</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                </div>
+            </div>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="estoque-tabela">
+                <!-- Os dados do estoque serão inseridos aqui dinamicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('estoque-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const produto = document.getElementById('produto').value;
+            const quantidade = document.getElementById('quantidade').value;
+            const tipo = document.getElementById('tipo').value;
+
+            // Enviar os dados para o servidor via API
+            fetch('/api/estoque', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ produto, quantidade, tipo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error('Erro:', error));
+        });
+
+        // Carregar os dados do estoque ao carregar a página
+        fetch('/api/estoque')
+            .then(response => response.json())
+            .then(data => {
+                const tabela = document.getElementById('estoque-tabela');
+                tabela.innerHTML = '';
+                data.forEach((item, index) => {
+                    tabela.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.produto}</td>
+                            <td>${item.quantidade}</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="removerItem(${item.id})">Remover</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+        function removerItem(id) {
+            fetch(`/api/estoque/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+    </script>
+</body>
+</html>
