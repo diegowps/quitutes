@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quitutes D'Line</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="box">
+      <div class="logo">Quitutes D'Line</div>
+      <div class="slogan">Sabor e carinho em cada pedacinho 💙</div>
+      <button class="btn" id="entrarBtn">
+        <i class="fas fa-store"></i> Entrar na loja
+      </button>
+    </div>
+  </div>
+
+  <!-- Script para redirecionar -->
+  <script>
+    const entrarBtn = document.getElementById('entrarBtn');
+    if (entrarBtn) {
+      entrarBtn.addEventListener('click', function() {
+        window.location.href = "dashboard.html"; // Redireciona corretamente para o dashboard
+      });
+    }
+  </script>
+</body>
+</html>

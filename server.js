@@ -13,9 +13,9 @@ app.use(express.json());
 
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
+    host: '10.26.46.42',
+    user: 'usuario',
+    password: 'senha',
     database: 'quitutes_db'
 });
 
