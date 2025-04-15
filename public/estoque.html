@@ -6,6 +6,31 @@
     <title>Gestão de Estoque - Quitutes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilização do pop-up */
+        #edit-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -68,6 +93,24 @@
         </table>
     </div>
 
+    <div id="popup-overlay"></div>
+    <div id="edit-popup">
+        <h5>Editar Produto</h5>
+        <form id="edit-form">
+            <div class="mb-3">
+                <label for="edit-produto" class="form-label">Produto</label>
+                <input type="text" id="edit-produto" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="edit-quantidade" class="form-label">Quantidade</label>
+                <input type="number" id="edit-quantidade" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" id="delete-item" class="btn btn-danger">Remover</button>
+            <button type="button" id="close-popup" class="btn btn-secondary">Cancelar</button>
+        </form>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('estoque-form').addEventListener('submit', function(e) {
@@ -106,6 +149,7 @@
                             <td>${item.produto}</td>
                             <td>${item.quantidade}</td>
                             <td>
+                                <button class="btn btn-warning btn-sm" onclick="openEditPopup(${item.id}, '${item.produto}', ${item.quantidade})">Editar</button>
                                 <button class="btn btn-danger btn-sm" onclick="removerItem(${item.id})">Remover</button>
                             </td>
                         </tr>
@@ -124,6 +168,77 @@
             })
             .catch(error => console.error('Erro:', error));
         }
+
+        let currentEditId = null;
+
+        function openEditPopup(id, produto, quantidade) {
+            currentEditId = id;
+            document.getElementById('edit-produto').value = produto;
+            document.getElementById('edit-quantidade').value = quantidade;
+            document.getElementById('popup-overlay').style.display = 'block';
+            document.getElementById('edit-popup').style.display = 'block';
+        }
+
+        function closeEditPopup() {
+            document.getElementById('popup-overlay').style.display = 'none';
+            document.getElementById('edit-popup').style.display = 'none';
+        }
+
+        document.getElementById('close-popup').addEventListener('click', closeEditPopup);
+
+        document.getElementById('edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const produto = document.getElementById('edit-produto').value;
+            const quantidade = document.getElementById('edit-quantidade').value;
+
+            fetch(`/api/estoque/${currentEditId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ produto, quantidade })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error('Erro:', error));
+        });
+
+        document.getElementById('delete-item').addEventListener('click', function() {
+            fetch(`/api/estoque/${currentEditId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error('Erro:', error));
+        });
+
+        // Atualizar a tabela para incluir o botão de editar
+        fetch('/api/estoque')
+            .then(response => response.json())
+            .then(data => {
+                const tabela = document.getElementById('estoque-tabela');
+                tabela.innerHTML = '';
+                data.forEach((item, index) => {
+                    tabela.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.produto}</td>
+                            <td>${item.quantidade}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="openEditPopup(${item.id}, '${item.produto}', ${item.quantidade})">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="removerItem(${item.id})">Remover</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
     </script>
 </body>
 </html>

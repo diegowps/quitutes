@@ -99,6 +99,24 @@ app.delete('/api/estoque/:id', (req, res) => {
     });
 });
 
+// Rota para atualizar um item do estoque
+app.put('/api/estoque/:id', (req, res) => {
+    const { id } = req.params;
+    const { produto, quantidade } = req.body;
+
+    const query = 'UPDATE estoque SET produto = ?, quantidade = ? WHERE id = ?';
+    db.query(query, [produto, quantidade, id], (err, results) => {
+        if (err) {
+            console.error('Erro ao atualizar item do estoque:', err);
+            res.status(500).send('Erro ao atualizar item do estoque');
+        } else if (results.affectedRows === 0) {
+            res.status(404).json({ message: 'Item não encontrado.' });
+        } else {
+            res.json({ message: 'Item atualizado com sucesso!' });
+        }
+    });
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
