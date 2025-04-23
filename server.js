@@ -3,7 +3,7 @@ const mysql = require('mysql2');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = 5500;
 
 // Middleware to serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -13,9 +13,9 @@ app.use(express.json());
 
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
+    host: '10.26.46.42',
+    user: 'usuario',
+    password: 'senha',
     database: 'quitutes_db'
 });
 
