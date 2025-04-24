@@ -1,85 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tarefas - Confeitaria</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tarefas - Confeitaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/dragula@3.7.3/dist/dragula.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body class="tarefas">
+    <div id="navbar-container"></div>
     <div class="container my-4">
         <form id="task-form" class="d-flex gap-2">
-          <input type="text" id="task-title" class="form-control" placeholder="Título da tarefa" required>
-          <input type="date" id="task-date" class="form-control" required>
-          <button type="submit" class="btn btn-success">Adicionar Tarefa</button>          
-        <button class="btn btn-warning btn-sm edit-btn">Editar</button>
-        <button class="btn btn-danger btn-sm delete-btn">Excluir</button>
+            <input type="text" id="task-title" class="form-control" placeholder="Título da tarefa" required>
+            <input type="date" id="task-date" class="form-control" required>
+            <button type="submit" class="btn btn-success">Adicionar Tarefa</button>
+            <button class="btn btn-warning btn-sm edit-btn">Editar</button>
+            <button class="btn btn-danger btn-sm delete-btn">Excluir</button>
         </form>
     </div>
-  <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
-  <div class="board">
-    <div class="column bg-light" id="urgentes">
-      <div class="column-title text-danger">Novas / Urgentes</div>
-      <div class="post-it urgente">Fazer cobertura do bolo<br><small>Entrega: 24/04</small></div>
+    <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
+    <div class="board">
+        <div class="column bg-light" id="urgentes">
+            <div class="column-title text-danger">Novas / Urgentes</div>
+            <div class="post-it urgente">Fazer cobertura do bolo<br><small>Entrega: 24/04</small></div>
+        </div>
+
+        <div class="column bg-light" id="fazendo">
+            <div class="column-title text-warning">Fazendo</div>
+            <div class="post-it fazendo">Misturar massa do cupcake<br><small>Entrega: 25/04</small></div>
+        </div>
+
+        <div class="column bg-light" id="concluidas">
+            <div class="column-title text-success">Concluídas</div>
+            <div class="post-it concluido">Finalizar etiquetas<br><small>Entrega: 22/04</small></div>
+        </div>
     </div>
 
-    <div class="column bg-light" id="fazendo">
-      <div class="column-title text-warning">Fazendo</div>
-      <div class="post-it fazendo">Misturar massa do cupcake<br><small>Entrega: 25/04</small></div>
-    </div>
+    <script>
+        const drake = dragula([
+            document.getElementById('urgentes'),
+            document.getElementById('fazendo'),
+            document.getElementById('concluidas')
+        ])
 
-    <div class="column bg-light" id="concluidas">
-      <div class="column-title text-success">Concluídas</div>
-      <div class="post-it concluido">Finalizar etiquetas<br><small>Entrega: 22/04</small></div>
-    </div>
-  </div>
+        drake.on('drop', function (el, target) {
+            el.classList.remove('urgente', 'fazendo', 'concluido')
 
-  <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
-  <link href="https://unpkg.com/dragula@3.7.3/dist/dragula.min.css" rel="stylesheet"/>
+            if (target.id === 'urgentes') {
+                el.classList.add('urgente')
+            } else if (target.id === 'fazendo') {
+                el.classList.add('fazendo')
+            } else if (target.id === 'concluidas') {
+                el.classList.add('concluido')
+            }
+        })
 
-  <script>
-    const drake = dragula([
-      document.getElementById('urgentes'),
-      document.getElementById('fazendo'),
-      document.getElementById('concluidas')
-    ]);
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const postIt = e.target.closest('.post-it')
+                const taskText = postIt.firstChild.textContent.trim()// Pega o texto da tarefa
+                const newTask = prompt('Editar tarefa:', taskText) // Prompt para editar a tarefa
 
-    drake.on('drop', function (el, target) {
-      // remove todas as classes de cor
-      el.classList.remove('urgente', 'fazendo', 'concluido');
+                if (newTask !== null && newTask !== '') {
+                    postIt.firstChild.textContent = newTask; // Atualiza o texto da tarefa
+                }
+            })
+        })
 
-      if (target.id === 'urgentes') {
-        el.classList.add('urgente');
-      } else if (target.id === 'fazendo') {
-        el.classList.add('fazendo');
-      } else if (target.id === 'concluidas') {
-        el.classList.add('concluido');
-      }
-    })
-
-    document.querySelectorAll('.edit-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
-        const postIt = e.target.closest('.post-it');
-        const taskText = postIt.firstChild.textContent.trim()// Pega o texto da tarefa
-        const newTask = prompt('Editar tarefa:', taskText) // Prompt para editar a tarefa
-
-        if (newTask !== null && newTask !== '') {
-          postIt.firstChild.textContent = newTask; // Atualiza o texto da tarefa
-        }
-      })
-    })
-
-    // Função para excluir a tarefa
-    document.querySelectorAll('.delete-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
-        const postIt = e.target.closest('.post-it')
-        if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-          postIt.remove(); // Exclui a tarefa
-        }
-      })
-    })
-  </script>
+        // Função para excluir a tarefa
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const postIt = e.target.closest('.post-it')
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    postIt.remove() // Exclui a tarefa
+                }
+            })
+        })
+    </script>
+    
+    <script>
+        fetch('navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-container').innerHTML = data;
+          });
+      </script>
+    <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scripts.js"></script>
 </body>
+
 </html>

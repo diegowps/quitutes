@@ -98,17 +98,17 @@ body.tarefas {
 }
 
   .urgente {
-    background-color: #f8d7da; /* vermelho pastel */
+    background-color: #f8d7da;
   }
 
   .fazendo {
-    background-color: #fff3cd; /* amarelo pastel */
+    background-color: #fff3cd;
   }
 
   .concluido {
-    background-color: #d4edda; /* verde pastel */
+    background-color: #d4edda;
   }
   .task button {
   font-size: 0.8rem;
-  padding: 2px 6px;
+  padding: 2px 6px
 }
