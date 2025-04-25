@@ -112,3 +112,77 @@ body.tarefas {
   font-size: 0.8rem;
   padding: 2px 6px
 }
+
+
+
+/* ======================== */
+/* Estilos da Tela Vendas */
+/* ======================== */
+
+/* Estilo dos botões */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+}
+.button-container button {
+  width: 300px;
+  height: 100px;
+  font-size: 20px;
+  margin: 15px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.button-ifood {
+  background-color: #FF0000; /* Vermelho */
+}
+.button-whatsapp {
+  background-color: #25D366; /* Verde */
+}
+.button-ifood img, .button-whatsapp img {
+  width: 40px;
+  height: 40px;
+}
+
+/* Estilo do popup */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.popup-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 500px;
+  text-align: center;
+}
+.popup-content h2 {
+  margin-bottom: 20px;
+}
+.popup-content button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
+}

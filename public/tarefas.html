@@ -39,25 +39,30 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
     <script>
-        const drake = dragula([
-            document.getElementById('urgentes'),
-            document.getElementById('fazendo'),
-            document.getElementById('concluidas')
-        ])
+        document.addEventListener('DOMContentLoaded', () => {
+            const drake = dragula([
+                document.getElementById('urgentes'),
+                document.getElementById('fazendo'),
+                document.getElementById('concluidas')
+            ])
 
-        drake.on('drop', function (el, target) {
-            el.classList.remove('urgente', 'fazendo', 'concluido')
+            drake.on('drop', function (el, target) {
+                el.classList.remove('urgente', 'fazendo', 'concluido')
 
-            if (target.id === 'urgentes') {
-                el.classList.add('urgente')
-            } else if (target.id === 'fazendo') {
-                el.classList.add('fazendo')
-            } else if (target.id === 'concluidas') {
-                el.classList.add('concluido')
-            }
-        })
+                if (target.id === 'urgentes') {
+                    el.classList.add('urgente')
+                } else if (target.id === 'fazendo') {
+                    el.classList.add('fazendo')
+                } else if (target.id === 'concluidas') {
+                    el.classList.add('concluido')
+                }
+            })
+        });
+    </script>
 
+    <script>
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const postIt = e.target.closest('.post-it')
@@ -88,7 +93,6 @@
             document.getElementById('navbar-container').innerHTML = data;
           });
       </script>
-    <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scripts.js"></script>
 </body>

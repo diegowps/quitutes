@@ -117,6 +117,66 @@ app.put('/api/estoque/:id', (req, res) => {
     });
 });
 
+// Adicionar rotas para CRUD de receitas
+
+// Verificar se a rota /api/receitas está configurada corretamente
+app.get('/api/receitas', (req, res) => {
+    const query = 'SELECT * FROM receitas';
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar receitas:', err);
+            res.status(500).send('Erro ao buscar receitas');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Rota para criar uma nova receita
+app.post('/api/receitas', (req, res) => {
+    const { titulo, imagem, categoria } = req.body;
+    const query = 'INSERT INTO receitas (titulo, imagem, categoria) VALUES (?, ?, ?)';
+    db.query(query, [titulo, imagem, categoria], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar receita:', err);
+            res.status(500).send('Erro ao adicionar receita');
+        } else {
+            res.json({ message: 'Receita adicionada com sucesso!' });
+        }
+    });
+});
+
+// Rota para atualizar uma receita
+app.put('/api/receitas/:id', (req, res) => {
+    const { id } = req.params;
+    const { titulo, imagem, categoria } = req.body;
+    const query = 'UPDATE receitas SET titulo = ?, imagem = ?, categoria = ? WHERE id = ?';
+    db.query(query, [titulo, imagem, categoria, id], (err, results) => {
+        if (err) {
+            console.error('Erro ao atualizar receita:', err);
+            res.status(500).send('Erro ao atualizar receita');
+        } else if (results.affectedRows === 0) {
+            res.status(404).json({ message: 'Receita não encontrada.' });
+        } else {
+            res.json({ message: 'Receita atualizada com sucesso!' });
+        }
+    });
+});
+
+// Rota para deletar uma receita
+app.delete('/api/receitas/:id', (req, res) => {
+    const { id } = req.params;
+    const query = 'DELETE FROM receitas WHERE id = ?';
+    db.query(query, [id], (err) => {
+        if (err) {
+            console.error('Erro ao remover receita:', err);
+            res.status(500).send('Erro ao remover receita');
+        } else {
+            res.json({ message: 'Receita removida com sucesso!' });
+        }
+    });
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`)
