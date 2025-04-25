@@ -1,9 +1,14 @@
 const express = require('express')
 const mysql = require('mysql2')
 const path = require('path')
+const cors = require('cors')
 
 const app = express()
 const port = 5500
+app.use(cors())
+app.use(express.json())
+app.use(express.static('public'))
+
 
 // Middleware to serve static files
 app.use(express.static(path.join(__dirname, 'public')))
@@ -117,7 +122,90 @@ app.put('/api/estoque/:id', (req, res) => {
     });
 });
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`)
+// Adicionar rotas para CRUD de receitas
+
+// Verificar se a rota /api/receitas está configurada corretamente
+app.get('/api/receitas', (req, res) => {
+    const query = 'SELECT * FROM receitas';
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar receitas:', err);
+            res.status(500).send('Erro ao buscar receitas');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Rota para criar uma nova receita
+app.post('/api/receitas', (req, res) => {
+    const { titulo, imagem, categoria } = req.body;
+    const query = 'INSERT INTO receitas (titulo, imagem, categoria) VALUES (?, ?, ?)';
+    db.query(query, [titulo, imagem, categoria], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar receita:', err);
+            res.status(500).send('Erro ao adicionar receita');
+        } else {
+            res.json({ message: 'Receita adicionada com sucesso!' });
+        }
+    });
+});
+
+// Rota para atualizar uma receita
+app.put('/api/receitas/:id', (req, res) => {
+    const { id } = req.params;
+    const { titulo, imagem, categoria } = req.body;
+    const query = 'UPDATE receitas SET titulo = ?, imagem = ?, categoria = ? WHERE id = ?';
+    db.query(query, [titulo, imagem, categoria, id], (err, results) => {
+        if (err) {
+            console.error('Erro ao atualizar receita:', err);
+            res.status(500).send('Erro ao atualizar receita');
+        } else if (results.affectedRows === 0) {
+            res.status(404).json({ message: 'Receita não encontrada.' });
+        } else {
+            res.json({ message: 'Receita atualizada com sucesso!' });
+        }
+    });
+});
+
+// Rota para deletar uma receita
+app.delete('/api/receitas/:id', (req, res) => {
+    const { id } = req.params;
+    const query = 'DELETE FROM receitas WHERE id = ?';
+    db.query(query, [id], (err) => {
+        if (err) {
+            console.error('Erro ao remover receita:', err);
+            res.status(500).send('Erro ao remover receita');
+        } else {
+            res.json({ message: 'Receita removida com sucesso!' });
+        }
+    });
+});
+
+/** Tarefas */
+// Criar nova tarefa
+app.post('/tarefas', (req, res) => {
+    const { tarefa, descricao, status, dataEntrega, dataCriacao } = req.body
+    const sql = 'INSERT INTO tarefas (tarefa, descricao, status, dataEntrega, dataCriacao) VALUES (?, ?, ?, ?, ?)'
+    db.query(sql, [tarefa, descricao, status, dataEntrega, dataCriacao], (err, result) => {
+        if (err) return res.status(500).json({ erro: err })
+        res.json({ id: result.insertId })
+    })
+})
+
+// Atualizar status da tarefa
+app.put('/tarefas/:id', (req, res) => {
+    const { status } = req.body
+    const id = req.params.id
+    const sql = 'UPDATE tarefas SET status = ? WHERE id = ?'
+    db.query(sql, [status, id], (err, result) => {
+        if (err) return res.status(500).json({ erro: err })
+        res.json({ mensagem: 'Status atualizado com sucesso!' })
+    })
+})
+
+
+// Iniciar servidor
+app.listen(3000, () => {
+    console.log(`Servidor rodando em http://localhost:${port}`)
 })
