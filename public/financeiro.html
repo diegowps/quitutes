@@ -1,30 +1,136 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Financeiro - Quitutes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="shortcut icon" href="img/quiIco.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+
+<body class="bg-light">
     <div id="navbar-container"></div>
-
-
     <div class="container mt-5">
         <h1 class="mb-4">Financeiro</h1>
         <p>Acompanhe receitas e despesas da confeitaria.</p>
     </div>
 
+    <div class="container my-5">
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label>Data Início</label>
+                <input type="date" id="inicio" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label>Data Fim</label>
+                <input type="date" id="fim" class="form-control">
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button onclick="buscarResumo()" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </div>
+        <!-- Modal para Nova Entrada / Nova Saída -->
+        <div class="modal fade" id="modalFinanceiro" tabindex="-1" aria-labelledby="modalFinanceiroLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalFinanceiroLabel">Registrar Movimento Financeiro</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formFinanceiro">
+                            <div class="mb-3">
+                                <label for="descricao" class="form-label">Descrição</label>
+                                <input type="text" class="form-control" id="descricao" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="valor" class="form-label">Valor</label>
+                                <input type="number" class="form-control" id="valor" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="data" class="form-label">Data</label>
+                                <input type="date" class="form-control" id="data" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipo" class="form-label">Tipo</label>
+                                <input type="text" class="form-control" id="tipo" readonly>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Salvar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de "Nova Entrada" e "Nova Saída" -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <button onclick="mostrarModal('entrada')" class="btn btn-success w-100">+ Nova Entrada</button>
+            </div>
+            <div class="col-md-6">
+                <button onclick="mostrarModal('saida')" class="btn btn-danger w-100">- Nova Saída</button>
+            </div>
+        </div>
+
+        <!-- Cards de resumo -->
+        <div class="row text-center mb-5">
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Saldo Atual</h5>
+                        <h3 id="saldo">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Faturamento</h5>
+                        <h3 id="faturamento">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Entradas</h5>
+                        <h3 id="entradas">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>Saídas</h5>
+                        <h3 id="saidas">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Entradas vs Saídas</h5>
+                <canvas id="graficoFinanceiro"></canvas>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         fetch('navbar.html')
-          .then(response => response.text())
-          .then(data => {
-            document.getElementById('navbar-container').innerHTML = data;
-          });
-      </script>
-      
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data
+            })
+    </script>
+    <script src="financeiro.js"></script>
+
 </body>
+
 </html>
