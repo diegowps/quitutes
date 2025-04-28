@@ -1,20 +1,27 @@
-const express = require('express');
-const mysql = require('mysql2');
-const path = require('path');
+const express = require('express')
+const mysql = require('mysql2')
+const path = require('path')
+const cors = require('cors')
 const multer = require('multer');
 const fs = require('fs');
 const dashboardRoutes = require('./routes/dashboard');
 const vendasRoutes = require('./routes/vendas'); // Importa as rotas de vendas
+const bodyParser = require('body-parser')
+
+const app = express()
+const port = 5500
+app.use(cors())
+app.use(express.json())
+app.use(express.static('public'))
 
 
-const app = express();
-const port = 5500;
+// Middleware to serve static files
+app.use(express.static(path.join(__dirname, 'public')))
 
-// Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+// Middleware para processar JSON
+app.use(express.json())
 
-// Configuração do banco de dados
+// Create a connection to the MySQL database
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -298,8 +305,104 @@ app.delete('/api/tarefas/:id', (req, res) => {
         }
     });
 });
+/** Financeiro */
+//Criar nova movimentação financeira
+app.post('/financeiro', (req, res) => {
+    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body;
 
-// Iniciar o servidor
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+    const sql = 'INSERT INTO financeiro (data, descricao, tipo, valor, forma_pagamento, categoria, observacao) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao];
+
+    connection.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Erro ao inserir movimentação financeira:', err);
+            return res.status(500).json({ error: 'Erro ao inserir movimentação financeira.' });
+        }
+        res.status(201).json({ message: 'Movimentação financeira adicionada com sucesso!' });
+    });
 });
+
+//Consulta de movimentações financeiras
+app.get('/financeiro', (req, res) => {
+    const sql = 'SELECT * FROM financeiro ORDER BY data DESC'
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar dados financeiros:', err)
+            return res.status(500).json({ error: 'Erro ao buscar dados financeiros.' })
+        }
+        res.json(results)
+    })
+})
+
+//Editar uma movimentação
+app.put('/financeiro/:id', (req, res) => {
+    const { id } = req.params
+    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body
+  
+    const sql = `
+      UPDATE financeiro
+      SET data = ?, descricao = ?, tipo = ?, valor = ?, forma_pagamento = ?, categoria = ?, observacao = ?
+      WHERE id = ?
+    `
+    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao, id]
+  
+    connection.query(sql, values, (err, results) => {
+      if (err) {
+        console.error('Erro ao atualizar movimentação financeira:', err)
+        return res.status(500).json({ error: 'Erro ao atualizar movimentação financeira.' })
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: 'Movimentação não encontrada.' })
+      }
+      res.json({ message: 'Movimentação financeira atualizada com sucesso!' })
+    })
+  })
+  
+  //Deletar uma movimentação
+  app.delete('/financeiro/:id', (req, res) => {
+    const { id } = req.params;
+  
+    const sql = 'DELETE FROM financeiro WHERE id = ?'
+    connection.query(sql, [id], (err, results) => {
+      if (err) {
+        console.error('Erro ao deletar movimentação financeira:', err)
+        return res.status(500).json({ error: 'Erro ao deletar movimentação financeira.' })
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: 'Movimentação não encontrada.' })
+      }
+      res.json({ message: 'Movimentação financeira deletada com sucesso!' })
+    })
+  })
+
+
+  // Iniciar o servidor
+app.listen(port, () => {
+    
+/** Tarefas */
+// Criar nova tarefa
+app.post('/tarefas', (req, res) => {
+    const { tarefa, descricao, status, dataEntrega, dataCriacao } = req.body
+    const sql = 'INSERT INTO tarefas (tarefa, descricao, status, dataEntrega, dataCriacao) VALUES (?, ?, ?, ?, ?)'
+    db.query(sql, [tarefa, descricao, status, dataEntrega, dataCriacao], (err, result) => {
+        if (err) return res.status(500).json({ erro: err })
+        res.json({ id: result.insertId })
+    })
+})
+
+// Atualizar status da tarefa
+app.put('/tarefas/:id', (req, res) => {
+    const { status } = req.body
+    const id = req.params.id
+    const sql = 'UPDATE tarefas SET status = ? WHERE id = ?'
+    db.query(sql, [status, id], (err, result) => {
+        if (err) return res.status(500).json({ erro: err })
+        res.json({ mensagem: 'Status atualizado com sucesso!' })
+    })
+})
+
+
+// Iniciar servidor
+app.listen(3000, () => {
+    console.log(`Servidor rodando em http://localhost:${port}`)
+})
