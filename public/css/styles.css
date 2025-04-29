@@ -49,6 +49,24 @@ p {
     display: none;
 }
 
+.container {
+  margin-top: 20px;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.card img {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.btn {
+  margin-right: 5px;
+}
+
 /* ======================== */
 /* Estilos da Tela Tarefas */
 /* ======================== */

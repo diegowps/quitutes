@@ -17,25 +17,20 @@
             <input type="text" id="task-title" class="form-control" placeholder="Título da tarefa" required>
             <input type="date" id="task-date" class="form-control" required>
             <button type="submit" class="btn btn-success">Adicionar Tarefa</button>
-            <button class="btn btn-warning btn-sm edit-btn">Editar</button>
-            <button class="btn btn-danger btn-sm delete-btn">Excluir</button>
         </form>
     </div>
     <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
     <div class="board">
         <div class="column bg-light" id="urgentes">
             <div class="column-title text-danger">Novas / Urgentes</div>
-            <div class="post-it urgente">Fazer cobertura do bolo<br><small>Entrega: 24/04</small></div>
         </div>
 
         <div class="column bg-light" id="fazendo">
             <div class="column-title text-warning">Fazendo</div>
-            <div class="post-it fazendo">Misturar massa do cupcake<br><small>Entrega: 25/04</small></div>
         </div>
 
         <div class="column bg-light" id="concluidas">
             <div class="column-title text-success">Concluídas</div>
-            <div class="post-it concluido">Finalizar etiquetas<br><small>Entrega: 22/04</small></div>
         </div>
     </div>
 
@@ -46,55 +41,113 @@
                 document.getElementById('urgentes'),
                 document.getElementById('fazendo'),
                 document.getElementById('concluidas')
-            ])
+            ]);
 
             drake.on('drop', function (el, target) {
-                el.classList.remove('urgente', 'fazendo', 'concluido')
+                const taskId = el.dataset.id;
+                let newStatus;
 
                 if (target.id === 'urgentes') {
-                    el.classList.add('urgente')
+                    newStatus = 'novas';
                 } else if (target.id === 'fazendo') {
-                    el.classList.add('fazendo')
+                    newStatus = 'fazendo';
                 } else if (target.id === 'concluidas') {
-                    el.classList.add('concluido')
+                    newStatus = 'concluidas';
                 }
-            })
+
+                fetch(`/api/tarefas/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao atualizar status da tarefa.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Status atualizado:', data);
+                })
+                .catch(err => console.error('Erro ao atualizar status:', err));
+            });
         });
+
+        // Adicionar tarefa ao banco de dados
+        document.getElementById('task-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('task-title').value.trim();
+            const date = document.getElementById('task-date').value;
+
+            if (title && date) {
+                fetch('/api/tarefas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ titulo: title, data_entrega: date })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    carregarTarefas();
+                })
+                .catch(err => console.error('Erro ao adicionar tarefa:', err));
+            }
+        });
+
+        // Carregar tarefas do banco de dados
+        function carregarTarefas() {
+            fetch('/api/tarefas')
+                .then(response => response.json())
+                .then(tarefas => {
+                    const urgentes = document.getElementById('urgentes');
+                    const fazendo = document.getElementById('fazendo');
+                    const concluidas = document.getElementById('concluidas');
+
+                    urgentes.innerHTML = '';
+                    fazendo.innerHTML = '';
+                    concluidas.innerHTML = '';
+
+                    tarefas.forEach(tarefa => {
+                        const task = document.createElement('div');
+                        task.classList.add('post-it', 'p-3', 'rounded', 'shadow', 'mb-2');
+                        task.dataset.id = tarefa.id;
+                        task.innerHTML = `
+                            <strong>${tarefa.titulo}</strong><br>
+                            <small>Entrega: ${new Date(tarefa.data_entrega).toLocaleDateString()}</small>
+                        `;
+
+                        if (tarefa.status === 'novas') {
+                            task.classList.add('urgente');
+                            urgentes.appendChild(task);
+                        } else if (tarefa.status === 'fazendo') {
+                            task.classList.add('fazendo');
+                            fazendo.appendChild(task);
+                        } else if (tarefa.status === 'concluidas') {
+                            task.classList.add('concluido');
+                            concluidas.appendChild(task);
+                        }
+                    });
+                })
+                .catch(err => console.error('Erro ao carregar tarefas:', err));
+        }
+
+        // Carregar tarefas ao iniciar
+        document.addEventListener('DOMContentLoaded', carregarTarefas);
     </script>
 
-    <script>
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const postIt = e.target.closest('.post-it')
-                const taskText = postIt.firstChild.textContent.trim()// Pega o texto da tarefa
-                const newTask = prompt('Editar tarefa:', taskText) // Prompt para editar a tarefa
-
-                if (newTask !== null && newTask !== '') {
-                    postIt.firstChild.textContent = newTask // Atualiza o texto da tarefa
-                }
-            })
-        })
-
-        // Função para excluir a tarefa
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const postIt = e.target.closest('.post-it')
-                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-                    postIt.remove() // Exclui a tarefa
-                }
-            })
-        })
-    </script>
-    
     <script>
         fetch('navbar.html')
           .then(response => response.text())
           .then(data => {
             document.getElementById('navbar-container').innerHTML = data;
           });
-      </script>
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/scripts.js"></script>
 </body>
 
 </html>
