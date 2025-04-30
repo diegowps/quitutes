@@ -12,8 +12,20 @@
 
     <div class="container mt-5">
         <h1 class="mb-4">Receitas</h1>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="busca-receita" class="form-control" placeholder="Buscar receita por nome...">
+            </div>
+            <div class="col-md-4">
+                <select id="filtro-categoria" class="form-select">
+                    <option value="">Todas as categorias</option>
+                    <option value="doces">Doces</option>
+                    <option value="salgados">Salgados</option>
+                    <option value="bebidas">Bebidas</option>
+                </select>
+            </div>
+        </div>
         <button class="btn btn-primary mb-4" id="btn-add-receita">Adicionar Receita</button>
-
         <div id="receitas-lista" class="row">
             <!-- Receitas serão carregadas aqui -->
         </div>
@@ -32,7 +44,7 @@
                             <label for="titulo" class="form-label">Título</label>
                             <input type="text" class="form-control" id="titulo" required>
                         </div>
-                        <div class="mb-3"></div>
+                        <div class="mb-3">
                             <label for="categoria" class="form-label">Categoria</label>
                             <select class="form-select" id="categoria" required>
                                 <option value="doces">Doces</option>
@@ -49,8 +61,8 @@
                             <textarea class="form-control" id="descricao"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="passos" class="form-label">Passos</label>
-                            <textarea class="form-control" id="passos"></textarea>
+                            <label for="ingredientes" class="form-label">Ingredientes (um por linha: ingrediente:quantidade:unidade)</label>
+                            <textarea class="form-control" id="ingredientes" placeholder="Ex: Açúcar:200:g\nFarinha:500:g\nOvo:3:un"></textarea>
                         </div>
                         <button type="submit" class="btn btn-success">Salvar</button>
                     </form>
@@ -59,8 +71,138 @@
         </div>
     </div>
 
+    <!-- Modal de Visualização da Receita -->
+    <div id="modal-visualizar-receita" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="visualizar-titulo">Receita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img id="visualizar-imagem" src="" class="img-fluid mb-3" alt="Imagem da Receita">
+                    <p><strong>Categoria:</strong> <span id="visualizar-categoria"></span></p>
+                    <p><strong>Descrição:</strong> <span id="visualizar-descricao"></span></p>
+                    <hr>
+                    <div class="mb-2">
+                        <label for="qtd-porcoes" class="form-label">Porções:</label>
+                        <input type="number" id="qtd-porcoes" class="form-control" value="1" min="1" style="width:100px;display:inline-block;">
+                    </div>
+                    <h6>Ingredientes:</h6>
+                    <ul id="visualizar-ingredientes" style="white-space: pre-line;"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let receitaEditandoId = null;
+        let receitasCache = [];
+
+        function carregarReceitas() {
+            fetch('/api/receitas')
+                .then(response => response.json())
+                .then(receitas => {
+                    receitasCache = receitas;
+                    renderizarReceitas(receitas);
+                });
+        }
+
+        function renderizarReceitas(receitas) {
+            const listaReceitas = document.getElementById('receitas-lista');
+            listaReceitas.innerHTML = '';
+            receitas.forEach(receita => {
+                const card = document.createElement('div');
+                card.className = 'col-md-4';
+                card.innerHTML = `
+                    <div class="card mb-4 receita-card" style="cursor:pointer;">
+                        <img src="${receita.imagem}" class="card-img-top" alt="${receita.titulo}">
+                        <div class="card-body">
+                            <h5 class="card-title">${receita.titulo}</h5>
+                            <p class="card-text">${receita.descricao || ''}</p>
+                            <button class="btn btn-warning btn-sm" onclick="editarReceita(${receita.id});event.stopPropagation();">Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="excluirReceita(${receita.id});event.stopPropagation();">Excluir</button>
+                        </div>
+                    </div>
+                `;
+                card.querySelector('.receita-card').addEventListener('click', () => abrirVisualizacaoReceita(receita));
+                listaReceitas.appendChild(card);
+            });
+        }
+
+        // Filtro e busca
+        function filtrarReceitas() {
+            const busca = document.getElementById('busca-receita').value.toLowerCase();
+            const categoria = document.getElementById('filtro-categoria').value;
+            let filtradas = receitasCache.filter(r => r.titulo.toLowerCase().includes(busca));
+            if (categoria) filtradas = filtradas.filter(r => r.categoria === categoria);
+            renderizarReceitas(filtradas);
+        }
+        document.getElementById('busca-receita').addEventListener('input', filtrarReceitas);
+        document.getElementById('filtro-categoria').addEventListener('change', filtrarReceitas);
+
+        function abrirVisualizacaoReceita(receita) {
+            document.getElementById('visualizar-titulo').textContent = receita.titulo;
+            document.getElementById('visualizar-imagem').src = receita.imagem;
+            document.getElementById('visualizar-categoria').textContent = receita.categoria;
+            document.getElementById('visualizar-descricao').textContent = receita.descricao || '';
+            document.getElementById('qtd-porcoes').value = 1;
+            atualizarIngredientes(receita, 1);
+            document.getElementById('qtd-porcoes').oninput = function() {
+                atualizarIngredientes(receita, this.value);
+            };
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-visualizar-receita')).show();
+        }
+
+        function atualizarIngredientes(receita, porcoes) {
+            const ul = document.getElementById('visualizar-ingredientes');
+            ul.innerHTML = '';
+            if (!receita.ingredientes) return;
+            const linhas = receita.ingredientes.split('\n');
+            linhas.forEach(linha => {
+                if (!linha.trim()) return;
+                const partes = linha.split(':');
+                if (partes.length < 3) return;
+                const nome = partes[0];
+                const qtd = parseFloat(partes[1]) * porcoes;
+                const unidade = partes[2];
+                const li = document.createElement('li');
+                li.textContent = `${nome}: ${qtd} ${unidade}`;
+                ul.appendChild(li);
+            });
+        }
+
+        function editarReceita(id) {
+            fetch(`/api/receitas/${id}`)
+                .then(response => response.json())
+                .then(receita => {
+                    document.getElementById('titulo').value = receita.titulo;
+                    document.getElementById('categoria').value = receita.categoria;
+                    document.getElementById('descricao').value = receita.descricao || '';
+                    document.getElementById('ingredientes').value = receita.ingredientes || '';
+                    receitaEditandoId = id;
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-receita')).show();
+                });
+        }
+
+        function excluirReceita(id) {
+            if (confirm('Tem certeza que deseja excluir esta receita?')) {
+                fetch(`/api/receitas/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload();
+                })
+                .catch(err => {
+                    alert('Erro ao excluir receita.');
+                    console.error(err);
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             fetch('/navbar.html')
                 .then(response => {
@@ -74,50 +216,26 @@
                 })
                 .catch(err => console.error('Erro ao carregar o menu de navegação:', err));
 
-            const listaReceitas = document.getElementById('receitas-lista');
-            const modalReceita = new bootstrap.Modal(document.getElementById('modal-receita'));
             const formReceita = document.getElementById('form-receita');
-
-            function carregarReceitas() {
-                fetch('/api/receitas')
-                    .then(response => response.json())
-                    .then(receitas => {
-                        listaReceitas.innerHTML = '';
-                        receitas.forEach(receita => {
-                            const card = document.createElement('div');
-                            card.className = 'col-md-4';
-                            card.innerHTML = `
-                                <div class="card mb-4">
-                                    <img src="${receita.imagem}" class="card-img-top" alt="${receita.titulo}">
-                                    <div class="card-body">
-                                        <h5 class="card-title">${receita.titulo}</h5>
-                                        <p class="card-text">${receita.descricao || ''}</p>
-                                        <button class="btn btn-warning btn-sm" onclick="editarReceita(${receita.id})">Editar</button>
-                                        <button class="btn btn-danger btn-sm" onclick="excluirReceita(${receita.id})">Excluir</button>
-                                    </div>
-                                </div>
-                            `;
-                            listaReceitas.appendChild(card);
-                        });
-                    });
-            }
-
             formReceita.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const formData = new FormData();
-                
                 formData.append('titulo', document.getElementById('titulo').value);
                 formData.append('categoria', document.getElementById('categoria').value);
                 formData.append('descricao', document.getElementById('descricao').value);
-                formData.append('passos', document.getElementById('passos').value);
-                
+                formData.append('ingredientes', document.getElementById('ingredientes').value);
                 const imagemInput = document.getElementById('imagem');
                 if (imagemInput.files[0]) {
                     formData.append('imagem', imagemInput.files[0]);
                 }
-
-                fetch('/api/receitas', {
-                    method: 'POST',
+                let url = '/api/receitas';
+                let method = 'POST';
+                if (receitaEditandoId) {
+                    url = `/api/receitas/${receitaEditandoId}`;
+                    method = 'PUT';
+                }
+                fetch(url, {
+                    method,
                     body: formData
                 })
                 .then(response => {
@@ -130,7 +248,8 @@
                 })
                 .then(data => {
                     alert(data.message);
-                    modalReceita.hide();
+                    bootstrap.Modal.getInstance(document.getElementById('modal-receita')).hide();
+                    receitaEditandoId = null;
                     carregarReceitas();
                 })
                 .catch(err => {
@@ -138,40 +257,13 @@
                     alert('Erro ao salvar receita: ' + err.message);
                 });
             });
-
             document.getElementById('btn-add-receita').addEventListener('click', () => {
                 formReceita.reset();
-                modalReceita.show();
+                receitaEditandoId = null;
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-receita')).show();
             });
-
             carregarReceitas();
         });
-
-        function editarReceita(id) {
-            fetch(`/api/receitas/${id}`)
-                .then(response => response.json())
-                .then(receita => {
-                    document.getElementById('titulo').value = receita.titulo;
-                    document.getElementById('categoria').value = receita.categoria;
-                    document.getElementById('descricao').value = receita.descricao || '';
-                    document.getElementById('passos').value = receita.passos || '';
-                    // Não preenche o campo de imagem (file) por segurança
-                    document.getElementById('form-receita').onsubmit = function(e) {
-                        e.preventDefault();
-                        const formData = new FormData(document.getElementById('form-receita'));
-                        fetch(`/api/receitas/${id}`, {
-                            method: 'PUT',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(() => {
-                            bootstrap.Modal.getInstance(document.getElementById('modal-receita')).hide();
-                            location.reload();
-                        });
-                    };
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-receita')).show();
-                });
-        }
     </script>
 </body>
 </html>

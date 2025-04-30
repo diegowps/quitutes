@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 const port = 5500;
@@ -14,8 +15,8 @@ app.use(express.json());
 // Configuração do banco de dados
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'usuario',
-  password: 'senha',
+  user: 'root',
+  password: '',
   database: 'quitutes_db'
 });
 
@@ -26,6 +27,9 @@ db.connect((err) => {
   }
   console.log('Conectado ao banco de dados MySQL.');
 });
+
+// Rotas da dashboard
+app.use('/api/dashboard', dashboardRoutes(db));
 
 // Configuração do multer para upload de imagens
 const uploadDir = path.join(__dirname, 'public/uploads');
@@ -90,44 +94,44 @@ app.get('/api/receitas/:id', (req, res) => {
 });
 
 app.post('/api/receitas', upload.single('imagem'), (req, res) => {
-  const { titulo, categoria, descricao, passos } = req.body;
-  const imagem = req.file ? `/uploads/${req.file.filename}` : '/images/default-recipe.jpg';
-
-  const query = 'INSERT INTO receitas (titulo, categoria, imagem, descricao, passos) VALUES (?, ?, ?, ?, ?)';
-  db.query(query, [titulo, categoria, imagem, descricao || '', passos || ''], (err) => {
-    if (err) {
-      console.error('Erro ao adicionar receita:', err);
-      res.status(500).json({ message: 'Erro ao adicionar receita: ' + err.message });
-    } else {
-      res.json({ message: 'Receita adicionada com sucesso!' });
-    }
+    const { titulo, categoria, descricao, ingredientes } = req.body;
+    const imagem = req.file ? `/uploads/${req.file.filename}` : '/images/default-recipe.jpg';
+  
+    const query = 'INSERT INTO receitas (titulo, categoria, imagem, descricao, ingredientes) VALUES (?, ?, ?, ?, ?)';
+    db.query(query, [titulo, categoria, imagem, descricao || '', ingredientes || ''], (err) => {
+      if (err) {
+        console.error('Erro ao adicionar receita:', err);
+        res.status(500).json({ message: 'Erro ao adicionar receita: ' + err.message });
+      } else {
+        res.json({ message: 'Receita adicionada com sucesso!' });
+      }
+    });
   });
-});
 
-app.put('/api/receitas/:id', upload.single('imagem'), (req, res) => {
-  const { id } = req.params;
-  const { titulo, categoria, descricao, passos } = req.body;
-  const imagem = req.file ? `/uploads/${req.file.filename}` : null;
-
-  const query = imagem
-    ? 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, passos = ?, imagem = ? WHERE id = ?'
-    : 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, passos = ? WHERE id = ?';
-
-  const params = imagem
-    ? [titulo, categoria, descricao, passos, imagem, id]
-    : [titulo, categoria, descricao, passos, id];
-
-  db.query(query, params, (err, results) => {
-    if (err) {
-      console.error('Erro ao atualizar receita:', err);
-      res.status(500).send('Erro ao atualizar receita');
-    } else if (results.affectedRows === 0) {
-      res.status(404).json({ message: 'Receita não encontrada.' });
-    } else {
-      res.json({ message: 'Receita atualizada com sucesso!' });
-    }
+  app.put('/api/receitas/:id', upload.single('imagem'), (req, res) => {
+    const { id } = req.params;
+    const { titulo, categoria, descricao, ingredientes } = req.body;
+    const imagem = req.file ? `/uploads/${req.file.filename}` : null;
+  
+    const query = imagem
+      ? 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, ingredientes = ?, imagem = ? WHERE id = ?'
+      : 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, ingredientes = ? WHERE id = ?';
+  
+    const params = imagem
+      ? [titulo, categoria, descricao, ingredientes, imagem, id]
+      : [titulo, categoria, descricao, ingredientes, id];
+  
+    db.query(query, params, (err, results) => {
+      if (err) {
+        console.error('Erro ao atualizar receita:', err);
+        res.status(500).send('Erro ao atualizar receita');
+      } else if (results.affectedRows === 0) {
+        res.status(404).json({ message: 'Receita não encontrada.' });
+      } else {
+        res.json({ message: 'Receita atualizada com sucesso!' });
+      }
+    });
   });
-});
 
 app.delete('/api/receitas/:id', (req, res) => {
   const { id } = req.params;
