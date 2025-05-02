@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receitas - Quitutes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="img/quiIco.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <!-- Conteúdo da Página -->
+    <div class="container mt-5">
+        <h1 class="mb-4">Receitas</h1>
+        <p>Bem-vindo à página de gerenciamento de receitas. Aqui você poderá visualizar suas receitas e seus detalhes.</p>
+
+        <!-- Filtros de Classificação -->
+        <div class="mb-4">
+            <label for="filtro-categoria" class="form-label">Filtrar por Categoria:</label>
+            <select id="filtro-categoria" class="form-select">
+                <option value="todas">Todas</option>
+                <option value="doces">Doces</option>
+                <option value="salgados">Salgados</option>
+                <option value="bebidas">Bebidas</option>
+            </select>
+        </div>
+
+        <!-- Lista de Receitas em Cartões -->
+        <div class="row" id="receitas-lista">
+        </div>
+
+        <!-- Modal para Detalhes da Receita -->
+        <div id="modal-receita" class="modal">
+            <div class="modal-content">
+                <h4 id="modal-titulo">Título da Receita</h4>
+                <p id="modal-conteudo">Passo a passo da receita será exibido aqui.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-green btn-flat">Fechar</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        fetch('navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-container').innerHTML = data;
+          });
+
+        // Filtro de receitas
+        document.getElementById('filtro-categoria').addEventListener('change', function() {
+            const categoria = this.value;
+            const cards = document.querySelectorAll('.receita-card');
+
+            cards.forEach(card => {
+                if (categoria === 'todas' || card.dataset.categoria === categoria) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar o modal
+            const modals = document.querySelectorAll('.modal');
+            M.Modal.init(modals);
+
+            // Adicionar evento de clique nos cartões
+            const cards = document.querySelectorAll('.receita-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const receita = this.dataset.receita;
+                    let titulo, conteudo;
+
+                    // Dados das receitas
+                    switch (receita) {
+                        case 'bolo-chocolate':
+                            titulo = 'Bolo de Chocolate';
+                            conteudo = '1. Misture os ingredientes. 2. Asse por 40 minutos. 3. Sirva.';
+                            break;
+                        case 'brigadeiro':
+                            titulo = 'Brigadeiro';
+                            conteudo = '1. Misture leite condensado e chocolate. 2. Cozinhe até engrossar. 3. Enrole e passe no granulado.';
+                            break;
+                        case 'coxinha':
+                            titulo = 'Coxinha';
+                            conteudo = '1. Prepare a massa. 2. Recheie com frango. 3. Frite até dourar.';
+                            break;
+                        default:
+                            titulo = 'Receita Desconhecida';
+                            conteudo = 'Detalhes não disponíveis.';
+                    }
+
+                    // Atualizar o modal
+                    document.getElementById('modal-titulo').textContent = titulo;
+                    document.getElementById('modal-conteudo').textContent = conteudo;
+
+                    // Abrir o modal
+                    const modal = M.Modal.getInstance(document.getElementById('modal-receita'));
+                    modal.open();
+                });
+            });
+
+            // Carregar receitas ao iniciar
+            carregarReceitas();
+        });
+
+        // Função para carregar receitas do banco de dados
+        function carregarReceitas() {
+            fetch('/api/receitas')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro na requisição: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(receitas => {
+                    const lista = document.getElementById('receitas-lista');
+                    lista.innerHTML = '';
+
+                    receitas.forEach(receita => {
+                        const card = document.createElement('div');
+                        card.className = 'col s12 m4';
+                        card.innerHTML = `
+                            <div class="card">
+                                <div class="card-image">
+                                    <img src="${receita.imagem}" alt="${receita.titulo}">
+                                </div>
+                                <div class="card-content">
+                                    <span class="card-title">${receita.titulo}</span>
+                                    <p>Categoria: ${receita.categoria}</p>
+                                </div>
+                                <div class="card-action">
+                                    <button class="btn editar-receita" data-id="${receita.id}">Editar</button>
+                                    <button class="btn red excluir-receita" data-id="${receita.id}">Excluir</button>
+                                </div>
+                            </div>
+                        `;
+                        lista.appendChild(card);
+                    });
+
+                    // Adicionar eventos aos botões de editar e excluir
+                    document.querySelectorAll('.editar-receita').forEach(botao => {
+                        botao.addEventListener('click', function() {
+                            const id = this.dataset.id;
+                            editarReceita(id);
+                        });
+                    });
+
+                    document.querySelectorAll('.excluir-receita').forEach(botao => {
+                        botao.addEventListener('click', function() {
+                            const id = this.dataset.id;
+                            excluirReceita(id);
+                        });
+                    });
+                })
+                .catch(err => console.error('Erro ao carregar receitas:', err));
+        }
+
+        // Função para editar receita
+        function editarReceita(id) {
+            fetch(`/api/receitas/${id}`)
+                .then(response => response.json())
+                .then(receita => {
+                    const lista = document.getElementById('receitas-lista');
+                    lista.innerHTML = `
+                        <div class='col s12'>
+                            <form id='crud-receitas-form'>
+                                <div class='input-field'>
+                                    <input id='titulo' type='text' value='${receita.titulo}' required>
+                                    <label for='titulo' class='active'>Título</label>
+                                </div>
+                                <div class='input-field'>
+                                    <input id='imagem' type='text' value='${receita.imagem}' required>
+                                    <label for='imagem' class='active'>URL da Imagem</label>
+                                </div>
+                                <div class='input-field'>
+                                    <select id='categoria'>
+                                        <option value='doces' ${receita.categoria === 'doces' ? 'selected' : ''}>Doces</option>
+                                        <option value='salgados' ${receita.categoria === 'salgados' ? 'selected' : ''}>Salgados</option>
+                                        <option value='bebidas' ${receita.categoria === 'bebidas' ? 'selected' : ''}>Bebidas</option>
+                                    </select>
+                                    <label for='categoria'>Categoria</label>
+                                </div>
+                                <button type='submit' class='btn'>Salvar</button>
+                            </form>
+                        </div>
+                    `;
+
+                    // Inicializar Materialize para os novos elementos
+                    const selects = document.querySelectorAll('select');
+                    M.FormSelect.init(selects);
+
+                    // Adicionar evento ao formulário
+                    document.getElementById('crud-receitas-form').addEventListener('submit', function(e) {
+                        e.preventDefault();
+
+                        const titulo = document.getElementById('titulo').value;
+                        const imagem = document.getElementById('imagem').value;
+                        const categoria = document.getElementById('categoria').value;
+
+                        fetch(`/api/receitas/${id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ titulo, imagem, categoria })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message);
+                            carregarReceitas();
+                        })
+                        .catch(err => console.error('Erro ao editar receita:', err));
+                    });
+                })
+                .catch(err => console.error('Erro ao carregar receita para edição:', err));
+        }
+
+        // Função para excluir receita
+        function excluirReceita(id) {
+            if (confirm('Tem certeza que deseja excluir esta receita?')) {
+                fetch(`/api/receitas/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    carregarReceitas();
+                })
+                .catch(err => console.error('Erro ao excluir receita:', err));
+            }
+        }
+    </script>
+</body>
+</html>

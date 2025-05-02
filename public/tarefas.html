@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tarefas - Confeitaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/dragula@3.7.3/dist/dragula.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="tarefas">
+    <div id="navbar-container"></div>
+
+    <div class="container my-4">
+        <form id="task-form" class="d-flex gap-2">
+            <input type="text" id="title" class="form-control" placeholder="Nova tarefa" required>
+            <input type="date" id="date" class="form-control" required>
+            <button type="submit" class="btn btn-success" id="btnCreateTarefas">Adicionar Tarefa</button>
+        </form>
+    </div>
+
+    <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
+
+    <div class="board">
+        <div class="column bg-light" id="urgentes">
+            <div class="column-title text-danger">Novas / Urgentes</div>
+        </div>
+
+        <div class="column bg-light" id="fazendo">
+            <div class="column-title text-warning">Fazendo</div>
+        </div>
+
+        <div class="column bg-light" id="concluidas">
+            <div class="column-title text-success">Concluídas</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
+
+    <script>
+    document.getElementById('task-form').addEventListener('submit', function (e) {
+        e.preventDefault()
+
+        const title = document.getElementById('title').value.trim()
+        const date = document.getElementById('date').value
+
+        if (!title || !date) {
+            alert('Preencha todos os campos!')
+            return
+        }
+
+        fetch('/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tarefa: title,
+                dataEntrega: date,
+                statusTarefa: 'novas'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message && data.id) {
+                addTaskToBoard(title, date, data.id, 'novas')
+                document.getElementById('task-form').reset()
+            }
+        })
+        .catch(error => console.error('Erro ao adicionar tarefa:', error));
+    })
+
+    function loadTasks() {
+        fetch('/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                tasks.forEach(task => {
+                    addTaskToBoard(task.tarefa, task.dataEntrega, task.id, task.statusTarefa)
+                })
+            })
+            .catch(error => console.error('Erro ao carregar tarefas:', error))
+    }
+
+    document.addEventListener('DOMContentLoaded', loadTasks)
+
+    function addTaskToBoard(title, date, id = null, status = 'novas') {
+        const postIt = document.createElement('div')
+        postIt.classList.add('post-it')
+
+        if (status === 'novas') {
+            postIt.classList.add('urgente')
+        } else if (status === 'fazendo') {
+            postIt.classList.add('fazendo')
+        } else if (status === 'concluidas') {
+            postIt.classList.add('concluido')
+        }
+
+        postIt.setAttribute('data-id', id)
+
+        postIt.innerHTML = `
+            ${title}<br>
+            <small>Entrega: ${formatDate(date)}</small>
+            <br>
+            <button class="btn btn-sm btn-danger mt-2" onclick="deleteTask(${id}, this)">Excluir</button>
+        `
+
+        let column;
+        if (status === 'novas') {
+            column = document.getElementById('urgentes')
+        } else if (status === 'fazendo') {
+            column = document.getElementById('fazendo')
+        } else if (status === 'concluidas') {
+            column = document.getElementById('concluidas')
+        }
+
+        column.insertBefore(postIt, column.children[1])
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString)
+        const day = String(date.getDate()).padStart(2, '0')
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        return `${day}/${month}`
+    }
+
+    function deleteTask(id, button) {
+        if (!confirm('Deseja excluir esta tarefa?')) return
+
+        fetch(`/tasks/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                const postIt = button.parentElement
+                postIt.remove()
+            }
+        })
+        .catch(error => console.error('Erro ao excluir tarefa:', error))
+    }
+
+    const drake = dragula([
+        document.getElementById('urgentes'),
+        document.getElementById('fazendo'),
+        document.getElementById('concluidas')
+    ])
+
+    drake.on('drop', function (el, target) {
+        el.classList.remove('urgente', 'fazendo', 'concluido')
+
+        let status = ''
+        if (target.id === 'urgentes') {
+            status = 'novas'
+            el.classList.add('urgente')
+        } else if (target.id === 'fazendo') {
+            status = 'fazendo'
+            el.classList.add('fazendo')
+        } else if (target.id === 'concluidas') {
+            status = 'concluidas'
+            el.classList.add('concluido')
+        }
+
+        const id = el.getAttribute('data-id')
+        if (id) {
+            fetch(`/tasks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ statusTarefa: status })
+            })
+            .then(res => res.json())
+            .then(data => console.log('Status atualizado:', data))
+            .catch(err => console.error('Erro ao atualizar status:', err))
+        }
+    })
+    </script>
+    <script>
+        fetch('navbar.html')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('navbar-container').innerHTML = data
+          })
+      </script>
+      <script src="/server.js"></script>
+</body>
+
+</html>
