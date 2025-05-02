@@ -1,15 +1,19 @@
-const express = require('express')
-const mysql = require('mysql2')
-const path = require('path')
-const cors = require('cors')
+const express = require('express');
+const mysql = require('mysql2');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
+const dashboardRoutes = require('./routes/dashboard');
+const vendasRoutes = require('./routes/vendas'); // Importa as rotas de vendas
 
-const app = express()
-const port = 5500
-app.use(cors())
+
+const app = express();
+const port = 5500;
 
 // Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use('/api/vendas', vendasRoutes(db)); // Registra as rotas de vendas
 
 // Configuração do banco de dados
 const db = mysql.createConnection({
@@ -293,146 +297,8 @@ app.delete('/api/tarefas/:id', (req, res) => {
         }
     });
 });
-/** Financeiro */
-//Criar nova movimentação financeira
-app.post('/financeiro', (req, res) => {
-    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body;
 
-    const sql = 'INSERT INTO financeiro (data, descricao, tipo, valor, forma_pagamento, categoria, observacao) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao];
-
-    connection.query(sql, values, (err, results) => {
-        if (err) {
-            console.error('Erro ao inserir movimentação financeira:', err);
-            return res.status(500).json({ error: 'Erro ao inserir movimentação financeira.' });
-        }
-        res.status(201).json({ message: 'Movimentação financeira adicionada com sucesso!' });
-    });
+// Iniciar o servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });
-
-//Consulta de movimentações financeiras
-app.get('/financeiro', (req, res) => {
-    const sql = 'SELECT * FROM financeiro ORDER BY data DESC'
-    connection.query(sql, (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar dados financeiros:', err)
-            return res.status(500).json({ error: 'Erro ao buscar dados financeiros.' })
-        }
-        res.json(results)
-    })
-})
-
-//Editar uma movimentação
-app.put('/financeiro/:id', (req, res) => {
-    const { id } = req.params
-    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body
-  
-    const sql = `
-      UPDATE financeiro
-      SET data = ?, descricao = ?, tipo = ?, valor = ?, forma_pagamento = ?, categoria = ?, observacao = ?
-      WHERE id = ?
-    `
-    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao, id]
-  
-    connection.query(sql, values, (err, results) => {
-      if (err) {
-        console.error('Erro ao atualizar movimentação financeira:', err)
-        return res.status(500).json({ error: 'Erro ao atualizar movimentação financeira.' })
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Movimentação não encontrada.' })
-      }
-      res.json({ message: 'Movimentação financeira atualizada com sucesso!' })
-    })
-  })
-  
-  //Deletar uma movimentação
-  app.delete('/financeiro/:id', (req, res) => {
-    const { id } = req.params;
-  
-    const sql = 'DELETE FROM financeiro WHERE id = ?'
-    connection.query(sql, [id], (err, results) => {
-      if (err) {
-        console.error('Erro ao deletar movimentação financeira:', err)
-        return res.status(500).json({ error: 'Erro ao deletar movimentação financeira.' })
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Movimentação não encontrada.' })
-      }
-      res.json({ message: 'Movimentação financeira deletada com sucesso!' })
-    })
-  })
-
-/** Tarefas */
-// Criar nova tarefa
-app.post('/tasks', (req, res) => {
-    const { tarefa, statusTarefa, dataEntrega } = req.body
-    const sql = 'INSERT INTO tarefas (tarefa, statusTarefa, dataEntrega) VALUES (?, ?, ?)'
-    db.query(sql, [tarefa, statusTarefa, dataEntrega], (err, result) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json({ id: result.insertId, message: 'Tarefa criada com sucesso!' })
-    })
-})
-
-// Listar todas as tarefas
-app.get('/tasks', (req, res) => {
-    const sql = 'SELECT * FROM tarefas'
-    db.query(sql, (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json(results)
-    })
-})
-
-// Atualizar tarefa (editar texto ou status)
-app.put('/tasks/:id', (req, res) => {
-    const { id } = req.params
-    const { tarefa, statusTarefa } = req.body
-
-    let fields = []
-    let values = []
-
-    if (tarefa !== undefined) {
-        fields.push('tarefa = ?')
-        values.push(tarefa)
-    }
-    if (statusTarefa !== undefined) {
-        fields.push('statusTarefa = ?')
-        values.push(statusTarefa)
-    }
-
-    if (fields.length === 0) {
-        return res.status(400).json({ message: 'Nenhuma alteração informada.' })
-    }
-
-    values.push(id)
-
-    const sql = `UPDATE tarefas SET ${fields.join(', ')} WHERE id = ?`
-    db.query(sql, values, (err) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json({ message: 'Tarefa atualizada com sucesso!' })
-    })
-})
-
-// Deletar tarefa
-app.delete('/tasks/:id', (req, res) => {
-    const { id } = req.params;
-    const sql = 'DELETE FROM tarefas WHERE id = ?'
-    db.query(sql, [id], (err) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json({ message: 'Tarefa deletada com sucesso!' })
-    })
-})
-
-
-// Iniciar servidor
-app.listen(3000, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`)
-})

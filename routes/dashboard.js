@@ -15,26 +15,46 @@ module.exports = (db) => {
         Promise.all([
             new Promise((resolve, reject) => {
                 db.query(queries.vendas, (err, results) => {
-                    if (err) reject(err);
-                    resolve(results[0].total || 0);
+                    if (err) {
+                        reject(err);
+                    } else if (!results || results.length === 0) {
+                        resolve(0); // Retorna 0 se não houver resultados
+                    } else {
+                        resolve(results[0].total || 0);
+                    }
                 });
             }),
             new Promise((resolve, reject) => {
                 db.query(queries.clientes, (err, results) => {
-                    if (err) reject(err);
-                    resolve(results[0].total || 0);
+                    if (err) {
+                        reject(err);
+                    } else if (!results || results.length === 0) {
+                        resolve(0);
+                    } else {
+                        resolve(results[0].total || 0);
+                    }
                 });
             }),
             new Promise((resolve, reject) => {
                 db.query(queries.pedidosPendentes, (err, results) => {
-                    if (err) reject(err);
-                    resolve(results[0].total || 0);
+                    if (err) {
+                        reject(err);
+                    } else if (!results || results.length === 0) {
+                        resolve(0);
+                    } else {
+                        resolve(results[0].total || 0);
+                    }
                 });
             }),
             new Promise((resolve, reject) => {
                 db.query(queries.estoqueBaixo, (err, results) => {
-                    if (err) reject(err);
-                    resolve(results[0].total || 0);
+                    if (err) {
+                        reject(err);
+                    } else if (!results || results.length === 0) {
+                        resolve(0);
+                    } else {
+                        resolve(results[0].total || 0);
+                    }
                 });
             })
         ])
