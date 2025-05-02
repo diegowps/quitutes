@@ -7,104 +7,191 @@ const app = express()
 const port = 5500
 app.use(cors())
 
-// Middleware to serve static files
-app.use(express.static(path.join(__dirname, 'public')))
+// Middleware para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
-// Middleware para processar JSON
-app.use(express.json())
-
-// Create a connection to the MySQL database
+// Configuração do banco de dados
 const db = mysql.createConnection({
-    host: '10.26.46.42',
-    user: 'usuario',
-    password: 'senha',
-    database: 'quitutes_db'
-})
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'quitutes_db'
+});
 
-// Connect to the database
 db.connect((err) => {
-    if (err) {
-        console.error('Error connecting to the database:', err)
-        return
-    }
-    console.log('Connected to the MySQL database.')
-})
+  if (err) {
+    console.error('Erro ao conectar ao banco de dados:', err);
+    return;
+  }
+  console.log('Conectado ao banco de dados MySQL.');
+});
 
-// Example route to fetch data from the database
-app.get('/api/data', (req, res) => {
-    const query = 'SELECT * FROM example_table'
+// Rotas da dashboard
+app.use('/api/dashboard', dashboardRoutes(db));
+
+// Configuração do multer para upload de imagens
+const uploadDir = path.join(__dirname, 'public/uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `receita-${uniqueSuffix}${ext}`);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Apenas imagens são permitidas!'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    }
+});
+
+// Rotas principais
+app.get('/api/receitas', (req, res) => {
+  const query = 'SELECT * FROM receitas';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Erro ao buscar receitas:', err);
+      res.status(500).send('Erro ao buscar receitas');
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+// Rota para buscar uma receita específica por ID
+app.get('/api/receitas/:id', (req, res) => {
+    const { id } = req.params;
+    const query = 'SELECT * FROM receitas WHERE id = ?';
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar receita:', err);
+            res.status(500).send('Erro ao buscar receita');
+        } else if (results.length === 0) {
+            res.status(404).json({ message: 'Receita não encontrada.' });
+        } else {
+            res.json(results[0]);
+        }
+    });
+});
+
+app.post('/api/receitas', upload.single('imagem'), (req, res) => {
+    const { titulo, categoria, descricao, ingredientes } = req.body;
+    const imagem = req.file ? `/uploads/${req.file.filename}` : '/images/default-recipe.jpg';
+  
+    const query = 'INSERT INTO receitas (titulo, categoria, imagem, descricao, ingredientes) VALUES (?, ?, ?, ?, ?)';
+    db.query(query, [titulo, categoria, imagem, descricao || '', ingredientes || ''], (err) => {
+      if (err) {
+        console.error('Erro ao adicionar receita:', err);
+        res.status(500).json({ message: 'Erro ao adicionar receita: ' + err.message });
+      } else {
+        res.json({ message: 'Receita adicionada com sucesso!' });
+      }
+    });
+  });
+
+  app.put('/api/receitas/:id', upload.single('imagem'), (req, res) => {
+    const { id } = req.params;
+    const { titulo, categoria, descricao, ingredientes } = req.body;
+    const imagem = req.file ? `/uploads/${req.file.filename}` : null;
+  
+    const query = imagem
+      ? 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, ingredientes = ?, imagem = ? WHERE id = ?'
+      : 'UPDATE receitas SET titulo = ?, categoria = ?, descricao = ?, ingredientes = ? WHERE id = ?';
+  
+    const params = imagem
+      ? [titulo, categoria, descricao, ingredientes, imagem, id]
+      : [titulo, categoria, descricao, ingredientes, id];
+  
+    db.query(query, params, (err, results) => {
+      if (err) {
+        console.error('Erro ao atualizar receita:', err);
+        res.status(500).send('Erro ao atualizar receita');
+      } else if (results.affectedRows === 0) {
+        res.status(404).json({ message: 'Receita não encontrada.' });
+      } else {
+        res.json({ message: 'Receita atualizada com sucesso!' });
+      }
+    });
+  });
+
+app.delete('/api/receitas/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM receitas WHERE id = ?';
+  db.query(query, [id], (err) => {
+    if (err) {
+      console.error('Erro ao remover receita:', err);
+      res.status(500).send('Erro ao remover receita');
+    } else {
+      res.json({ message: 'Receita removida com sucesso!' });
+    }
+  });
+});
+
+// Rota para obter todos os itens do estoque
+app.get('/api/estoque', (req, res) => {
+    const query = 'SELECT * FROM estoque';
     db.query(query, (err, results) => {
         if (err) {
-            console.error('Error fetching data:', err)
-            res.status(500).send('Error fetching data')
+            console.error('Erro ao buscar itens do estoque:', err);
+            res.status(500).send('Erro ao buscar itens do estoque');
         } else {
             res.json(results);
         }
     });
 });
 
-// Rota para listar os itens do estoque
-app.get('/api/estoque', (req, res) => {
-    const query = 'SELECT * FROM estoque'
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar itens do estoque:', err)
-            res.status(500).send('Erro ao buscar itens do estoque')
-        } else {
-            res.json(results)
-        }
-    })
-})
-
-// Rota para adicionar ou atualizar itens no estoque
+// Rota para adicionar um item ao estoque
 app.post('/api/estoque', (req, res) => {
-    const { produto, quantidade, tipo } = req.body
+    const { produto, quantidade, tipo } = req.body;
 
-    if (tipo === 'entrada') {
-        const query = 'INSERT INTO estoque (produto, quantidade) VALUES (?, ?) ON DUPLICATE KEY UPDATE quantidade = quantidade + ?'
-        db.query(query, [produto, quantidade, quantidade], (err) => {
-            if (err) {
-                console.error('Erro ao adicionar item ao estoque:', err)
-                res.status(500).send('Erro ao adicionar item ao estoque')
-            } else {
-                res.json({ message: 'Item adicionado ao estoque com sucesso!' })
-            }
-        })
-    } else if (tipo === 'saida') {
-        const query = 'UPDATE estoque SET quantidade = quantidade - ? WHERE produto = ? AND quantidade >= ?'
-        db.query(query, [quantidade, produto, quantidade], (err, results) => {
-            if (err) {
-                console.error('Erro ao remover item do estoque:', err)
-                res.status(500).send('Erro ao remover item do estoque')
-            } else if (results.affectedRows === 0) {
-                res.status(400).json({ message: 'Quantidade insuficiente no estoque ou produto não encontrado.' })
-            } else {
-                res.json({ message: 'Item removido do estoque com sucesso!' })
-            }
-        })
-    } else {
-        res.status(400).send('Tipo inválido. Use "entrada" ou "saida".')
+    if (!produto || !quantidade || !tipo) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
     }
-})
 
-// Rota para remover um item do estoque
-app.delete('/api/estoque/:id', (req, res) => {
-    const { id } = req.params
-    const query = 'DELETE FROM estoque WHERE id = ?'
-    db.query(query, [id], (err) => {
+    const query = tipo === 'entrada'
+        ? 'INSERT INTO estoque (produto, quantidade) VALUES (?, ?)'
+        : 'UPDATE estoque SET quantidade = quantidade - ? WHERE produto = ?';
+
+    const params = tipo === 'entrada'
+        ? [produto, quantidade]
+        : [quantidade, produto];
+
+    db.query(query, params, (err, results) => {
         if (err) {
-            console.error('Erro ao remover item do estoque:', err)
-            res.status(500).send('Erro ao remover item do estoque')
+            console.error('Erro ao registrar item no estoque:', err);
+            res.status(500).send('Erro ao registrar item no estoque');
         } else {
-            res.json({ message: 'Item removido do estoque com sucesso!' })
+            res.json({ message: 'Item registrado com sucesso!' });
         }
-    })
-})
+    });
+});
 
-// Rota para atualizar um item do estoque
+// Rota para editar um item do estoque
 app.put('/api/estoque/:id', (req, res) => {
     const { id } = req.params;
     const { produto, quantidade } = req.body;
+
+    if (!produto || !quantidade) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+    }
 
     const query = 'UPDATE estoque SET produto = ?, quantidade = ? WHERE id = ?';
     db.query(query, [produto, quantidade, id], (err, results) => {
@@ -119,62 +206,90 @@ app.put('/api/estoque/:id', (req, res) => {
     });
 });
 
-// Adicionar rotas para CRUD de receitas
+// Rota para remover um item do estoque
+app.delete('/api/estoque/:id', (req, res) => {
+    const { id } = req.params;
 
-// Verificar se a rota /api/receitas está configurada corretamente
-app.get('/api/receitas', (req, res) => {
-    const query = 'SELECT * FROM receitas';
+    const query = 'DELETE FROM estoque WHERE id = ?';
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao remover item do estoque:', err);
+            res.status(500).send('Erro ao remover item do estoque');
+        } else if (results.affectedRows === 0) {
+            res.status(404).json({ message: 'Item não encontrado.' });
+        } else {
+            res.json({ message: 'Item removido com sucesso!' });
+        }
+    });
+});
+
+// Rota para obter todas as tarefas
+app.get('/api/tarefas', (req, res) => {
+    const query = 'SELECT * FROM tarefas';
     db.query(query, (err, results) => {
         if (err) {
-            console.error('Erro ao buscar receitas:', err);
-            res.status(500).send('Erro ao buscar receitas');
+            console.error('Erro ao buscar tarefas:', err);
+            res.status(500).send('Erro ao buscar tarefas');
         } else {
             res.json(results);
         }
     });
 });
 
-// Rota para criar uma nova receita
-app.post('/api/receitas', (req, res) => {
-    const { titulo, imagem, categoria } = req.body;
-    const query = 'INSERT INTO receitas (titulo, imagem, categoria) VALUES (?, ?, ?)';
-    db.query(query, [titulo, imagem, categoria], (err) => {
+// Rota para adicionar uma nova tarefa
+app.post('/api/tarefas', (req, res) => {
+    const { titulo, data_entrega } = req.body;
+
+    if (!titulo || !data_entrega) {
+        return res.status(400).json({ message: 'Título e data de entrega são obrigatórios.' });
+    }
+
+    const query = 'INSERT INTO tarefas (titulo, data_entrega, status) VALUES (?, ?, ?)';
+    db.query(query, [titulo, data_entrega, 'novas'], (err) => {
         if (err) {
-            console.error('Erro ao adicionar receita:', err);
-            res.status(500).send('Erro ao adicionar receita');
+            console.error('Erro ao adicionar tarefa:', err);
+            res.status(500).send('Erro ao adicionar tarefa');
         } else {
-            res.json({ message: 'Receita adicionada com sucesso!' });
+            res.json({ message: 'Tarefa adicionada com sucesso!' });
         }
     });
 });
 
-// Rota para atualizar uma receita
-app.put('/api/receitas/:id', (req, res) => {
+// Rota para atualizar o status de uma tarefa
+app.put('/api/tarefas/:id', (req, res) => {
     const { id } = req.params;
-    const { titulo, imagem, categoria } = req.body;
-    const query = 'UPDATE receitas SET titulo = ?, imagem = ?, categoria = ? WHERE id = ?';
-    db.query(query, [titulo, imagem, categoria, id], (err, results) => {
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ message: 'O status é obrigatório.' });
+    }
+
+    const query = 'UPDATE tarefas SET status = ? WHERE id = ?';
+    db.query(query, [status, id], (err, results) => {
         if (err) {
-            console.error('Erro ao atualizar receita:', err);
-            res.status(500).send('Erro ao atualizar receita');
+            console.error('Erro ao atualizar status da tarefa:', err);
+            res.status(500).send('Erro ao atualizar status da tarefa');
         } else if (results.affectedRows === 0) {
-            res.status(404).json({ message: 'Receita não encontrada.' });
+            res.status(404).json({ message: 'Tarefa não encontrada.' });
         } else {
-            res.json({ message: 'Receita atualizada com sucesso!' });
+            res.json({ message: 'Status da tarefa atualizado com sucesso!' });
         }
     });
 });
 
-// Rota para deletar uma receita
-app.delete('/api/receitas/:id', (req, res) => {
+// Rota para remover uma tarefa
+app.delete('/api/tarefas/:id', (req, res) => {
     const { id } = req.params;
-    const query = 'DELETE FROM receitas WHERE id = ?';
-    db.query(query, [id], (err) => {
+
+    const query = 'DELETE FROM tarefas WHERE id = ?';
+    db.query(query, [id], (err, results) => {
         if (err) {
-            console.error('Erro ao remover receita:', err);
-            res.status(500).send('Erro ao remover receita');
+            console.error('Erro ao remover tarefa:', err);
+            res.status(500).send('Erro ao remover tarefa');
+        } else if (results.affectedRows === 0) {
+            res.status(404).json({ message: 'Tarefa não encontrada.' });
         } else {
-            res.json({ message: 'Receita removida com sucesso!' });
+            res.json({ message: 'Tarefa removida com sucesso!' });
         }
     });
 });
