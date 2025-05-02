@@ -1,31 +1,13 @@
 {
   "name": "quitutes",
   "version": "1.0.0",
-  "description": "JASBD System - Time SENAC de Desenvolvimento (Projeto integrador)",
-  "main": "main.js",
+  "description": "Web app for Quitutes with Express and MySQL integration",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/diegowps/quitutes.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/diegowps/quitutes/issues"
-  },
-  "homepage": "https://github.com/diegowps/quitutes#readme",
-  "devDependencies": {
-    "electron": "^35.1.4"
+    "start": "node server.js"
   },
   "dependencies": {
-    "jspdf": "^3.0.1",
-    "mysql": "^2.18.1",
-    "mysql2": "^3.14.0",
-    "promise": "^8.3.0",
-    "promise2": "^1.1.3"
+    "express": "^4.18.2",
+    "mysql2": "^3.3.0"
   }
 }
