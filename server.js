@@ -2,6 +2,7 @@ const express = require('express')
 const mysql = require('mysql2')
 const path = require('path')
 const cors = require('cors')
+const bodyParser = require('body-parser')
 
 const app = express()
 const port = 5500
@@ -12,12 +13,12 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // Middleware para processar JSON
 app.use(express.json())
-
+app.use(express.urlencoded({ extended: true }))
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: '10.26.46.42',
-    user: 'usuario',
-    password: 'senha',
+    host: 'localhost',
+    user: 'root',
+    password: '',
     database: 'quitutes_db'
 })
 
@@ -178,146 +179,245 @@ app.delete('/api/receitas/:id', (req, res) => {
         }
     });
 });
-/** Financeiro */
-//Criar nova movimentação financeira
-app.post('/financeiro', (req, res) => {
-    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body;
 
-    const sql = 'INSERT INTO financeiro (data, descricao, tipo, valor, forma_pagamento, categoria, observacao) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao];
-
-    connection.query(sql, values, (err, results) => {
-        if (err) {
-            console.error('Erro ao inserir movimentação financeira:', err);
-            return res.status(500).json({ error: 'Erro ao inserir movimentação financeira.' });
-        }
-        res.status(201).json({ message: 'Movimentação financeira adicionada com sucesso!' });
+//Vendas
+// GET - Listar todas as vendas
+app.get('/api/vendas', (req, res) => {
+    db.query('SELECT * FROM vendas', (err, results) => {
+        if (err) return res.status(500).json({ error: err });
+        res.json(results);
     });
 });
 
-//Consulta de movimentações financeiras
-app.get('/financeiro', (req, res) => {
-    const sql = 'SELECT * FROM financeiro ORDER BY data DESC'
-    connection.query(sql, (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar dados financeiros:', err)
-            return res.status(500).json({ error: 'Erro ao buscar dados financeiros.' })
-        }
-        res.json(results)
-    })
-})
+// POST - Criar nova venda
+app.post('/api/vendas', (req, res) => {
+    const { canal, valor } = req.body;
+    db.query('INSERT INTO vendas (canal, valor) VALUES (?, ?)', [canal, valor], (err, result) => {
+        if (err) return res.status(500).json({ error: err });
+        res.json({ message: 'Venda registrada com sucesso!', id: result.insertId });
+    });
+});
 
-//Editar uma movimentação
-app.put('/financeiro/:id', (req, res) => {
-    const { id } = req.params
-    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body
-  
-    const sql = `
-      UPDATE financeiro
-      SET data = ?, descricao = ?, tipo = ?, valor = ?, forma_pagamento = ?, categoria = ?, observacao = ?
-      WHERE id = ?
-    `
-    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao, id]
-  
-    connection.query(sql, values, (err, results) => {
-      if (err) {
-        console.error('Erro ao atualizar movimentação financeira:', err)
-        return res.status(500).json({ error: 'Erro ao atualizar movimentação financeira.' })
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Movimentação não encontrada.' })
-      }
-      res.json({ message: 'Movimentação financeira atualizada com sucesso!' })
-    })
-  })
-  
-  //Deletar uma movimentação
-  app.delete('/financeiro/:id', (req, res) => {
+// DELETE - Deletar venda
+app.delete('/api/vendas/:id', (req, res) => {
+    const id = req.params.id;
+    db.query('DELETE FROM vendas WHERE id = ?', [id], (err) => {
+        if (err) return res.status(500).json({ error: err });
+        res.json({ message: 'Venda excluída com sucesso!' });
+    });
+});
+
+
+// === CRUD de FINANCEIRO ===
+
+// Buscar todos os lançamentos (com filtros opcionais)
+app.get('/api/financeiro', (req, res) => {
+    const { inicio, fim, forma_pagamento, categoria } = req.query;
+    let sql = 'SELECT * FROM financeiro WHERE 1=1';
+    const params = [];
+
+    if (inicio) {
+        sql += ' AND data >= ?';
+        params.push(inicio);
+    }
+    if (fim) {
+        sql += ' AND data <= ?';
+        params.push(fim);
+    }
+    if (forma_pagamento) {
+        sql += ' AND forma_pagamento = ?';
+        params.push(forma_pagamento);
+    }
+    if (categoria) {
+        sql += ' AND categoria = ?';
+        params.push(categoria);
+    }
+
+    db.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar financeiro:', err);
+            res.status(500).send('Erro ao buscar financeiro');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Rota para listar os movimentos
+app.get('/api/financeiro/movimentos', (req, res) => {
+    const { inicio, fim, tipo } = req.query;
+    let sql = 'SELECT * FROM movimentos WHERE 1=1';
+    const params = [];
+
+    if (inicio) {
+        sql += ' AND data >= ?';
+        params.push(inicio);
+    }
+    if (fim) {
+        sql += ' AND data <= ?';
+        params.push(fim);
+    }
+    if (tipo) {
+        sql += ' AND tipo = ?';
+        params.push(tipo);
+    }
+
+    db.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar movimentos:', err);
+            res.status(500).send('Erro ao buscar movimentos');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// Rota para adicionar um movimento
+app.post('/api/financeiro/movimentos', (req, res) => {
+    const { tipo, categoria, valor, data, descricao } = req.body;
+
+    if (!tipo || !valor || !data) {
+        return res.status(400).json({ message: 'Campos obrigatórios: tipo, valor e data.' });
+    }
+
+    const query = 'INSERT INTO movimentos (tipo, categoria, valor, data, descricao) VALUES (?, ?, ?, ?, ?)';
+    db.query(query, [tipo, categoria, valor, data, descricao], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar movimento:', err);
+            res.status(500).send('Erro ao adicionar movimento');
+        } else {
+            res.json({ message: 'Movimento adicionado com sucesso!' });
+        }
+    });
+});
+
+app.post('/api/financeiro/movimentos', (req, res) => {
+    const { descricao, valor, data, tipo } = req.body;
+
+    if (!descricao || !valor || !data || !tipo) {
+        return res.status(400).json({ message: 'Campos obrigatórios: descricao, valor, data e tipo.' });
+    }
+
+    const sql = 'INSERT INTO movimentos (descricao, valor, data, tipo) VALUES (?, ?, ?, ?)';
+    db.query(sql, [descricao, valor, data, tipo], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar movimento:', err);
+            res.status(500).send('Erro ao adicionar movimento');
+        } else {
+            res.json({ message: 'Movimento adicionado com sucesso!' });
+        }
+    });
+});
+
+// Criar um novo lançamento
+app.post('/api/financeiro', (req, res) => {
+    const { descricao, valor, tipo, forma_pagamento, categoria, data } = req.body;
+
+    if (!descricao || !valor || !tipo || !data) {
+        return res.status(400).json({ message: 'Campos obrigatórios: descricao, valor, tipo e data.' });
+    }
+
+    const query = 'INSERT INTO financeiro (descricao, valor, tipo, forma_pagamento, categoria, data) VALUES (?, ?, ?, ?, ?, ?)';
+    db.query(query, [descricao, valor, tipo, forma_pagamento, categoria, data], (err) => {
+        if (err) {
+            console.error('Erro ao criar lançamento financeiro:', err);
+            res.status(500).send('Erro ao criar lançamento financeiro');
+        } else {
+            res.json({ message: 'Lançamento financeiro criado com sucesso!' });
+        }
+    });
+});
+
+// Atualizar um lançamento
+app.put('/api/financeiro/:id', (req, res) => {
     const { id } = req.params;
-  
-    const sql = 'DELETE FROM financeiro WHERE id = ?'
-    connection.query(sql, [id], (err, results) => {
-      if (err) {
-        console.error('Erro ao deletar movimentação financeira:', err)
-        return res.status(500).json({ error: 'Erro ao deletar movimentação financeira.' })
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Movimentação não encontrada.' })
-      }
-      res.json({ message: 'Movimentação financeira deletada com sucesso!' })
-    })
-  })
-
-/** Tarefas */
-// Criar nova tarefa
-app.post('/tasks', (req, res) => {
-    const { tarefa, statusTarefa, dataEntrega } = req.body
-    const sql = 'INSERT INTO tarefas (tarefa, statusTarefa, dataEntrega) VALUES (?, ?, ?)'
-    db.query(sql, [tarefa, statusTarefa, dataEntrega], (err, result) => {
+    const { descricao, valor, tipo, forma_pagamento, categoria, data } = req.body;
+    const sql = 'UPDATE financeiro SET descricao = ?, valor = ?, tipo = ?, forma_pagamento = ?, categoria = ?, data = ? WHERE id = ?';
+    db.query(sql, [descricao, valor, tipo, forma_pagamento, categoria, data, id], (err) => {
         if (err) {
-            return res.status(500).json({ error: err.message })
+            console.error('Erro ao atualizar lançamento:', err);
+            res.status(500).send('Erro ao atualizar lançamento');
+        } else {
+            res.json({ message: 'Lançamento atualizado com sucesso' });
         }
-        res.json({ id: result.insertId, message: 'Tarefa criada com sucesso!' })
-    })
-})
+    });
+});
 
-// Listar todas as tarefas
-app.get('/tasks', (req, res) => {
-    const sql = 'SELECT * FROM tarefas'
-    db.query(sql, (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json(results)
-    })
-})
-
-// Atualizar tarefa (editar texto ou status)
-app.put('/tasks/:id', (req, res) => {
-    const { id } = req.params
-    const { tarefa, statusTarefa } = req.body
-
-    let fields = []
-    let values = []
-
-    if (tarefa !== undefined) {
-        fields.push('tarefa = ?')
-        values.push(tarefa)
-    }
-    if (statusTarefa !== undefined) {
-        fields.push('statusTarefa = ?')
-        values.push(statusTarefa)
-    }
-
-    if (fields.length === 0) {
-        return res.status(400).json({ message: 'Nenhuma alteração informada.' })
-    }
-
-    values.push(id)
-
-    const sql = `UPDATE tarefas SET ${fields.join(', ')} WHERE id = ?`
-    db.query(sql, values, (err) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
-        res.json({ message: 'Tarefa atualizada com sucesso!' })
-    })
-})
-
-// Deletar tarefa
-app.delete('/tasks/:id', (req, res) => {
+// Deletar um lançamento
+app.delete('/api/financeiro/:id', (req, res) => {
     const { id } = req.params;
-    const sql = 'DELETE FROM tarefas WHERE id = ?'
+    const sql = 'DELETE FROM financeiro WHERE id = ?';
     db.query(sql, [id], (err) => {
         if (err) {
-            return res.status(500).json({ error: err.message })
+            console.error('Erro ao deletar lançamento:', err);
+            res.status(500).send('Erro ao deletar lançamento');
+        } else {
+            res.json({ message: 'Lançamento deletado com sucesso' });
         }
-        res.json({ message: 'Tarefa deletada com sucesso!' })
-    })
-})
+    });
+});
+
+// Endpoint para verificar o status do servidor
+app.get('/api/financeiro/status', (req, res) => {
+    res.status(200).send({ message: 'Servidor está online.' });
+});
+
+// === CRUD de TAREFAS ===
+// Rota para listar todas as tarefas
+app.get('/api/tarefas', (req, res) => {
+    const sql = 'SELECT id, descricao, status, entrega FROM tarefas';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar tarefas:', err);
+            res.status(500).send('Erro ao buscar tarefas');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+app.post('/api/tarefas', (req, res) => {
+    const { descricao, status, entrega } = req.body;
+    const sql = 'INSERT INTO tarefas (descricao, status, entrega) VALUES (?, ?, ?)';
+    db.query(sql, [descricao, status, entrega], (err, result) => {
+        if (err) {
+            console.error('Erro ao criar tarefa:', err);
+            res.status(500).send('Erro ao criar tarefa');
+        } else {
+            res.json({ id: result.insertId });
+        }
+    });
+});
+
+app.put('/api/tarefas/:id', (req, res) => {
+    const { id } = req.params;
+    const { descricao, status, entrega } = req.body;
+    const sql = 'UPDATE tarefas SET descricao = ?, status = ?, entrega = ? WHERE id = ?';
+    db.query(sql, [descricao, status, entrega, id], (err, result) => {
+        if (err) {
+            console.error('Erro ao atualizar tarefa:', err);
+            res.status(500).send('Erro ao atualizar tarefa');
+        } else {
+            res.json({ message: 'Tarefa atualizada com sucesso' });
+        }
+    });
+});
+
+app.delete('/api/tarefas/:id', (req, res) => {
+    const { id } = req.params;
+    const sql = 'DELETE FROM tarefas WHERE id = ?';
+    db.query(sql, [id], (err) => {
+        if (err) {
+            console.error('Erro ao deletar tarefa:', err);
+            res.status(500).send('Erro ao deletar tarefa');
+        } else {
+            res.json({ message: 'Tarefa deletada com sucesso' });
+        }
+    });
+});
 
 
 // Iniciar servidor
-app.listen(3000, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`)
-})
+app.listen(port, () => {
+    console.log(`Servidor rodando em http://localhost:${port}`);
+});
