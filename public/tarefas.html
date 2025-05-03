@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tarefas - Confeitaria</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://unpkg.com/dragula@3.7.3/dist/dragula.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="img/quiIco.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -33,16 +34,16 @@
 
 
     <div class="board">
-        <div class="column bg-light" id="urgentes">
-            <div class="column-title text-danger">Novas / Urgentes</div>
+        <div class="column bg-light" id="urgente">
+            <div class="column-title text-danger">Urgente</div>
         </div>
 
         <div class="column bg-light" id="fazendo">
             <div class="column-title text-warning">Fazendo</div>
         </div>
 
-        <div class="column bg-light" id="concluidas">
-            <div class="column-title text-success">Concluídas</div>
+        <div class="column bg-light" id="concluido">
+            <div class="column-title text-success">Concluído</div>
         </div>
     </div>
 
@@ -53,140 +54,123 @@
 <<<<<<< HEAD
 
     <script>
-    document.getElementById('task-form').addEventListener('submit', function (e) {
-        e.preventDefault()
+        const apiUrl = 'http://localhost:5500/api/tarefas';
 
-        const title = document.getElementById('title').value.trim()
-        const date = document.getElementById('date').value
-
-        if (!title || !date) {
-            alert('Preencha todos os campos!')
-            return
+        async function carregarTarefas() {
+            const res = await fetch(apiUrl);
+            const tarefas = await res.json();
+            tarefas.forEach(tarefa => adicionarTarefaNaColuna(tarefa));
         }
 
-        fetch('/tasks', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                tarefa: title,
-                dataEntrega: date,
-                statusTarefa: 'novas'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message && data.id) {
-                addTaskToBoard(title, date, data.id, 'novas')
-                document.getElementById('task-form').reset()
+        function adicionarTarefaNaColuna(tarefa) {
+            const coluna = document.getElementById(tarefa.status);
+            const div = document.createElement('div');
+            div.className = `post-it ${tarefa.status}`;
+            div.dataset.id = tarefa.id;
+
+            // Adicionar a classe de cor com base no status
+            if (tarefa.status === 'urgente') div.classList.add('bg-pastel-danger');
+            if (tarefa.status === 'fazendo') div.classList.add('bg-pastel-warning');
+            if (tarefa.status === 'concluido') div.classList.add('bg-pastel-success');
+
+            div.innerHTML = `
+                ${tarefa.descricao}<br>
+                <small>Entrega: ${new Date(tarefa.entrega).toLocaleDateString()}</small>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-warning btn-sm rounded-circle edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-outline-danger btn-sm rounded-circle delete-btn"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            coluna.appendChild(div);
+        }
+
+        async function criarTarefaDireto() {
+            const descricao = document.getElementById('descricaoTarefa').value.trim();
+            const entrega = document.getElementById('dataEntrega').value;
+
+            if (!descricao || !entrega) {
+                alert("Preencha a descrição e a data de entrega.");
+                return;
             }
-        })
-        .catch(error => console.error('Erro ao adicionar tarefa:', error));
-    })
 
-    function loadTasks() {
-        fetch('/tasks')
-            .then(response => response.json())
-            .then(tasks => {
-                tasks.forEach(task => {
-                    addTaskToBoard(task.tarefa, task.dataEntrega, task.id, task.statusTarefa)
-                })
-            })
-            .catch(error => console.error('Erro ao carregar tarefas:', error))
-    }
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ descricao, status: 'urgente', entrega })
+            });
 
-    document.addEventListener('DOMContentLoaded', loadTasks)
+            const novaTarefa = await res.json();
+            adicionarTarefaNaColuna({ id: novaTarefa.id, descricao, status: 'urgente', entrega });
 
-    function addTaskToBoard(title, date, id = null, status = 'novas') {
-        const postIt = document.createElement('div')
-        postIt.classList.add('post-it')
-
-        if (status === 'novas') {
-            postIt.classList.add('urgente')
-        } else if (status === 'fazendo') {
-            postIt.classList.add('fazendo')
-        } else if (status === 'concluidas') {
-            postIt.classList.add('concluido')
+            document.getElementById('descricaoTarefa').value = '';
+            document.getElementById('dataEntrega').value = '';
         }
 
-        postIt.setAttribute('data-id', id)
+        document.addEventListener('click', async e => {
+            const postIt = e.target.closest('.post-it');
+            const id = postIt?.dataset.id;
 
-        postIt.innerHTML = `
-            ${title}<br>
-            <small>Entrega: ${formatDate(date)}</small>
-            <br>
-            <button class="btn btn-sm btn-danger mt-2" onclick="deleteTask(${id}, this)">Excluir</button>
-        `
+            if (e.target.classList.contains('edit-btn')) {
+                const novaDesc = prompt('Editar tarefa:', postIt.firstChild.textContent.trim());
+                const novaData = prompt('Nova data de entrega (YYYY-MM-DD):');
 
-        let column;
-        if (status === 'novas') {
-            column = document.getElementById('urgentes')
-        } else if (status === 'fazendo') {
-            column = document.getElementById('fazendo')
-        } else if (status === 'concluidas') {
-            column = document.getElementById('concluidas')
-        }
+                if (novaDesc && novaData) {
+                    await fetch(`${apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ descricao: novaDesc, entrega: novaData, status: postIt.parentElement.id })
+                    });
 
-        column.insertBefore(postIt, column.children[1])
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString)
-        const day = String(date.getDate()).padStart(2, '0')
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        return `${day}/${month}`
-    }
-
-    function deleteTask(id, button) {
-        if (!confirm('Deseja excluir esta tarefa?')) return
-
-        fetch(`/tasks/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                const postIt = button.parentElement
-                postIt.remove()
+                    postIt.innerHTML = `
+                        ${novaDesc}<br>
+                        <small>Entrega: ${new Date(novaData).toLocaleDateString()}</small>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-warning btn-sm rounded-circle edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="btn btn-outline-danger btn-sm rounded-circle delete-btn"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                }
             }
-        })
-        .catch(error => console.error('Erro ao excluir tarefa:', error))
-    }
 
-    const drake = dragula([
-        document.getElementById('urgentes'),
-        document.getElementById('fazendo'),
-        document.getElementById('concluidas')
-    ])
+            if (e.target.classList.contains('delete-btn')) {
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+                    postIt.remove();
+                }
+            }
+        });
 
-    drake.on('drop', function (el, target) {
-        el.classList.remove('urgente', 'fazendo', 'concluido')
+        const drake = dragula([
+            document.getElementById('urgente'),
+            document.getElementById('fazendo'),
+            document.getElementById('concluido')
+        ]);
 
-        let status = ''
-        if (target.id === 'urgentes') {
-            status = 'novas'
-            el.classList.add('urgente')
-        } else if (target.id === 'fazendo') {
-            status = 'fazendo'
-            el.classList.add('fazendo')
-        } else if (target.id === 'concluidas') {
-            status = 'concluidas'
-            el.classList.add('concluido')
-        }
+        drake.on('drop', async (el, target) => {
+            const id = el.dataset.id;
+            const novoStatus = target.id;
 
-        const id = el.getAttribute('data-id')
-        if (id) {
-            fetch(`/tasks/${id}`, {
+            // Remover as classes de cor antigas
+            el.classList.remove('bg-pastel-danger', 'bg-pastel-warning', 'bg-pastel-success');
+
+            // Adicionar a nova classe de acordo com o novo status
+            if (novoStatus === 'urgente') el.classList.add('bg-pastel-danger');
+            if (novoStatus === 'fazendo') el.classList.add('bg-pastel-warning');
+            if (novoStatus === 'concluido') el.classList.add('bg-pastel-success');
+
+            const entregaText = el.querySelector('small')?.textContent?.replace('Entrega: ', '').trim();
+            const entrega = new Date(entregaText.split('/').reverse().join('-')).toISOString().slice(0, 10);
+            const descricao = el.childNodes[0].textContent.trim();
+
+            // Atualizar no banco de dados
+            await fetch(`${apiUrl}/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ statusTarefa: status })
-            })
-            .then(res => res.json())
-            .then(data => console.log('Status atualizado:', data))
-            .catch(err => console.error('Erro ao atualizar status:', err))
-        }
-    })
+                body: JSON.stringify({ descricao, status: novoStatus, entrega })
+            });
+        });
+
+        carregarTarefas();
     </script>
     <script>
         fetch('navbar.html')

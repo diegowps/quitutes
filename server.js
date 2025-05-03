@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // Middleware para processar JSON
 app.use(express.json())
-
+app.use(express.urlencoded({ extended: true }))
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
   host: 'localhost',
@@ -315,51 +315,72 @@ app.post('/financeiro', (req, res) => {
 
     connection.query(sql, values, (err, results) => {
         if (err) {
-            console.error('Erro ao inserir movimentação financeira:', err);
-            return res.status(500).json({ error: 'Erro ao inserir movimentação financeira.' });
+            console.error('Erro ao buscar movimentos:', err);
+            res.status(500).send('Erro ao buscar movimentos');
+        } else {
+            res.json(results);
         }
-        res.status(201).json({ message: 'Movimentação financeira adicionada com sucesso!' });
     });
 });
 
-//Consulta de movimentações financeiras
-app.get('/financeiro', (req, res) => {
-    const sql = 'SELECT * FROM financeiro ORDER BY data DESC'
-    connection.query(sql, (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar dados financeiros:', err)
-            return res.status(500).json({ error: 'Erro ao buscar dados financeiros.' })
-        }
-        res.json(results)
-    })
-})
+// Rota para adicionar um movimento
+app.post('/api/financeiro/movimentos', (req, res) => {
+    const { tipo, categoria, valor, data, descricao } = req.body;
 
-//Editar uma movimentação
-app.put('/financeiro/:id', (req, res) => {
-    const { id } = req.params
-    const { data, descricao, tipo, valor, forma_pagamento, categoria, observacao } = req.body
-  
-    const sql = `
-      UPDATE financeiro
-      SET data = ?, descricao = ?, tipo = ?, valor = ?, forma_pagamento = ?, categoria = ?, observacao = ?
-      WHERE id = ?
-    `
-    const values = [data, descricao, tipo, valor, forma_pagamento, categoria, observacao, id]
-  
-    connection.query(sql, values, (err, results) => {
-      if (err) {
-        console.error('Erro ao atualizar movimentação financeira:', err)
-        return res.status(500).json({ error: 'Erro ao atualizar movimentação financeira.' })
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Movimentação não encontrada.' })
-      }
-      res.json({ message: 'Movimentação financeira atualizada com sucesso!' })
-    })
-  })
-  
-  //Deletar uma movimentação
-  app.delete('/financeiro/:id', (req, res) => {
+    if (!tipo || !valor || !data) {
+        return res.status(400).json({ message: 'Campos obrigatórios: tipo, valor e data.' });
+    }
+
+    const query = 'INSERT INTO movimentos (tipo, categoria, valor, data, descricao) VALUES (?, ?, ?, ?, ?)';
+    db.query(query, [tipo, categoria, valor, data, descricao], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar movimento:', err);
+            res.status(500).send('Erro ao adicionar movimento');
+        } else {
+            res.json({ message: 'Movimento adicionado com sucesso!' });
+        }
+    });
+});
+
+app.post('/api/financeiro/movimentos', (req, res) => {
+    const { descricao, valor, data, tipo } = req.body;
+
+    if (!descricao || !valor || !data || !tipo) {
+        return res.status(400).json({ message: 'Campos obrigatórios: descricao, valor, data e tipo.' });
+    }
+
+    const sql = 'INSERT INTO movimentos (descricao, valor, data, tipo) VALUES (?, ?, ?, ?)';
+    db.query(sql, [descricao, valor, data, tipo], (err) => {
+        if (err) {
+            console.error('Erro ao adicionar movimento:', err);
+            res.status(500).send('Erro ao adicionar movimento');
+        } else {
+            res.json({ message: 'Movimento adicionado com sucesso!' });
+        }
+    });
+});
+
+// Criar um novo lançamento
+app.post('/api/financeiro', (req, res) => {
+    const { descricao, valor, tipo, forma_pagamento, categoria, data } = req.body;
+
+    if (!descricao || !valor || !tipo || !data) {
+        return res.status(400).json({ message: 'Campos obrigatórios: descricao, valor, tipo e data.' });
+    }
+
+    const query = 'INSERT INTO financeiro (descricao, valor, tipo, forma_pagamento, categoria, data) VALUES (?, ?, ?, ?, ?, ?)';
+    db.query(query, [descricao, valor, tipo, forma_pagamento, categoria, data], (err) => {
+        if (err) {
+            console.error('Erro ao criar lançamento financeiro:', err);
+            res.status(500).send('Erro ao criar lançamento financeiro');
+        } else {
+            res.json({ message: 'Lançamento financeiro criado com sucesso!' });
+        }
+    });
+});
+
+// Atualizar um lançamento
+app.put('/api/financeiro/:id', (req, res) => {
     const { id } = req.params;
   
     const sql = 'DELETE FROM financeiro WHERE id = ?'
@@ -403,6 +424,6 @@ app.put('/tarefas/:id', (req, res) => {
 
 
 // Iniciar servidor
-app.listen(3000, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`)
-})
+app.listen(port, () => {
+    console.log(`Servidor rodando em http://localhost:${port}`);
+});

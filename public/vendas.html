@@ -20,15 +20,53 @@
         <!-- Botões no centro da tela -->
         <div class="button-container">
             <button class="button-ifood" onclick="openPopup('iFood')">
-                <img src="img/moto-icon.png" alt="Moto"> Menu iFood
+                <img src="img/ifood.png" alt="Moto"> Menu iFood
             </button>
             <button class="button-whatsapp" onclick="openPopup('WhatsApp')">
-                <img src="img/whatsapp-icon.png" alt="WhatsApp"> Menu WhatsApp
+                <img src="img/whatsapp.png" alt="WhatsApp"> Menu WhatsApp
             </button>
             <button class="button-venda" onclick="window.location.href='venda-balcao.html'">
                 <img src="img/caixa-icon.png" alt="Venda Balcão"> Venda Balcão
             </button>
         </div>
+    </div>
+
+    <!-- Formulário para registrar vendas -->
+    <div class="container mt-5">
+        <h2 class="mb-4">Registrar Venda</h2>
+        <form id="venda-form">
+            <div class="mb-3">
+                <label for="canal" class="form-label">Canal</label>
+                <select id="canal" class="form-select" required>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="iFood">iFood</option>
+                    <option value="Balcão">Balcão</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="valor" class="form-label">Valor (R$)</label>
+                <input type="number" id="valor" class="form-control" step="0.01" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </form>
+    </div>
+
+    <!-- Tabela de vendas registradas -->
+    <div class="container mt-5">
+        <h2 class="mb-4">Vendas Registradas</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Canal</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="vendas-tabela">
+                <!-- Vendas serão carregadas aqui -->
+            </tbody>
+        </table>
     </div>
 
     <!-- Popup Overlay -->
@@ -62,6 +100,56 @@
             const popupOverlay = document.getElementById('popup-overlay');
             popupOverlay.style.display = 'none';
         }
+
+        // Função para registrar venda
+        document.getElementById('venda-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const canal = document.getElementById('canal').value;
+            const valor = document.getElementById('valor').value;
+
+            const response = await fetch('/api/vendas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ canal, valor })
+            });
+
+            if (response.ok) {
+                alert('Venda registrada com sucesso!');
+                carregarVendas();
+            } else {
+                alert('Erro ao registrar venda.');
+            }
+        });
+
+        // Função para carregar vendas
+        async function carregarVendas() {
+            const response = await fetch('/api/vendas');
+            const vendas = await response.json();
+            const tabela = document.getElementById('vendas-tabela');
+            tabela.innerHTML = vendas.map(venda => `
+                <tr>
+                    <td>${venda.id}</td>
+                    <td>${venda.canal}</td>
+                    <td>R$ ${venda.valor.toFixed(2)}</td>
+                    <td>
+                        <button onclick="deletarVenda(${venda.id})" class="btn btn-danger btn-sm">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Função para deletar venda
+        async function deletarVenda(id) {
+            const response = await fetch(`/api/vendas/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                alert('Venda excluída com sucesso!');
+                carregarVendas();
+            } else {
+                alert('Erro ao excluir venda.');
+            }
+        }
+
+        carregarVendas();
     </script>
 </body>
 </html>
