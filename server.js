@@ -13,7 +13,6 @@ const port = 5500;
 // Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-app.use('/api/vendas', vendasRoutes(db)); // Registra as rotas de vendas
 
 // Configuração do banco de dados
 const db = mysql.createConnection({
@@ -33,6 +32,8 @@ db.connect((err) => {
 
 // Rotas da dashboard
 app.use('/api/dashboard', dashboardRoutes(db));
+app.use('/api/vendas', vendasRoutes(db)); // Registra as rotas de vendas
+
 
 // Configuração do multer para upload de imagens
 const uploadDir = path.join(__dirname, 'public/uploads');

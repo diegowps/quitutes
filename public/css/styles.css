@@ -170,6 +170,27 @@ body.tarefas {
   height: 40px;
 }
 
+.button-venda {
+  background-color: #007BFF; /* Azul */
+  color: white;
+  width: 300px;
+  height: 100px;
+  font-size: 20px;
+  margin: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.button-venda img {
+  width: 40px;
+  height: 40px;
+}
+
 /* Estilo do popup */
 .popup-overlay {
   position: fixed;

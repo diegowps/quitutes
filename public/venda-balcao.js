@@ -38,7 +38,7 @@ function adicionarAoCarrinho(produtoId) {
     atualizarCarrinho();
 }
 
-// Atualiza o carrinho
+// Atualiza o carrinho e calcula o total
 function atualizarCarrinho() {
     const tabelaCarrinho = document.querySelector('#carrinho-table tbody');
     tabelaCarrinho.innerHTML = '';
@@ -52,9 +52,9 @@ function atualizarCarrinho() {
         row.innerHTML = `
             <td>${item.nome}</td>
             <td>${item.quantidade}</td>
-            <td>${item.preco}</td>
+            <td>${item.preco.toFixed(2)}</td>
             <td>${subtotal.toFixed(2)}</td>
-            <td><button onclick="removerDoCarrinho(${item.id})">Remover</button></td>
+            <td><button class="btn btn-danger btn-sm" onclick="removerDoCarrinho(${item.id})">Remover</button></td>
         `;
         tabelaCarrinho.appendChild(row);
     });

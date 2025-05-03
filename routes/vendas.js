@@ -18,15 +18,17 @@ module.exports = (db) => {
     // Rota para registrar uma venda
     router.post('/registrar', (req, res) => {
         const { itens, cliente, pagamento, total } = req.body;
-
-        // Inicia uma transação
+    
+        if (!total || total <= 0) {
+            return res.status(400).json({ error: 'O valor total da venda é inválido.' });
+        }
+    
         db.beginTransaction((err) => {
             if (err) {
                 console.error('Erro ao iniciar transação:', err);
                 return res.status(500).json({ error: 'Erro ao registrar venda' });
             }
-
-            // Insere a venda
+    
             const vendaQuery = 'INSERT INTO vendas (cliente_id, total, data_venda) VALUES (?, ?, NOW())';
             db.query(vendaQuery, [cliente?.id || null, total], (err, vendaResult) => {
                 if (err) {
@@ -35,8 +37,9 @@ module.exports = (db) => {
                         res.status(500).json({ error: 'Erro ao registrar venda' });
                     });
                 }
-
+    
                 const vendaId = vendaResult.insertId;
+    
 
                 // Atualiza o estoque e registra os itens vendidos
                 const itemQueries = itens.map((item) => {
