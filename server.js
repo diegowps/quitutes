@@ -395,10 +395,6 @@ app.put('/api/financeiro/:id', (req, res) => {
       res.json({ message: 'Movimentação financeira deletada com sucesso!' })
     })
   })
-
-
-  // Iniciar o servidor
-app.listen(port, () => {
     
 /** Tarefas */
 // Criar nova tarefa
@@ -413,17 +409,16 @@ app.post('/tarefas', (req, res) => {
 
 // Atualizar status da tarefa
 app.put('/tarefas/:id', (req, res) => {
-    const { status } = req.body
-    const id = req.params.id
-    const sql = 'UPDATE tarefas SET status = ? WHERE id = ?'
+    const { status } = req.body;
+    const id = req.params.id;
+    const sql = 'UPDATE tarefas SET status = ? WHERE id = ?';
     db.query(sql, [status, id], (err, result) => {
-        if (err) return res.status(500).json({ erro: err })
-        res.json({ mensagem: 'Status atualizado com sucesso!' })
-    })
-})
+        if (err) return res.status(500).json({ erro: err });
+        res.json({ mensagem: 'Status atualizado com sucesso!' });
+    });
+});
 
-
-// Iniciar servidor
+// Iniciar o servidor
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
 });

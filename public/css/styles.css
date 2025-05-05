@@ -382,6 +382,91 @@ h2.text-center {
   height: 40px;
 }
 
+/* Estilo para tabelas */
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead {
+  background-color: #343a40;
+  color: white;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Botões */
+.btn {
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Formulários */
+.form-label {
+  font-weight: bold;
+  color: #495057;
+}
+
+.form-control {
+  border-radius: 8px;
+}
+
+/* Pagamentos */
+#pagamentos-list {
+  list-style: none;
+  padding: 0;
+}
+
+#pagamentos-list li {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Estilo para os cards de produtos */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.card .btn {
+  margin-top: 10px;
+}
+
+/* Estilo para o campo de pesquisa */
+#pesquisa-produto {
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 1rem;
+}
+
 /* Estilo do popup */
 .popup-overlay {
   position: fixed;
