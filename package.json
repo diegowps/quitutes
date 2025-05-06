@@ -10,6 +10,8 @@
     "body-parser": "^2.2.0",
     "chart.js": "^4.4.9",
     "cors": "^2.8.5",
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-usb": "^3.0.0-alpha.4",
     "express": "^4.21.2",
     "moment": "^2.30.1",
     "multer": "^1.4.5-lts.2",

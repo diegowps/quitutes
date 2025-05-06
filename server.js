@@ -7,6 +7,8 @@ const fs = require('fs');
 const dashboardRoutes = require('./routes/dashboard');
 const vendasRoutes = require('./routes/vendas'); // Importa as rotas de vendas
 const bodyParser = require('body-parser')
+const escpos = require('escpos'); // Biblioteca para impressão ESC/POS
+escpos.USB = require('escpos-usb'); // Configuração para impressoras USB
 
 const app = express()
 const port = 5500
@@ -418,6 +420,65 @@ app.put('/tarefas/:id', (req, res) => {
     });
 });
 
+// Imprimir cupom elgin i8
+app.post('/api/imprimir-cupom', (req, res) => {
+    const { logo, cliente, itensVenda, pagamento, totalVenda } = req.body;
+
+    try {
+        // Configurar a impressora USB
+        const device = new escpos.USB();
+        const printer = new escpos.Printer(device);
+
+        device.open(() => {
+            // Imprimir logo
+            if (logo) {
+                escpos.Image.load(logo, (image) => {
+                    printer.align('ct').image(image, 's8');
+                });
+            }
+
+            // Imprimir cabeçalho
+            printer
+                .align('ct')
+                .text('Quitutes')
+                .text('-----------------------------')
+                .text(`Cliente: ${cliente.nome}`)
+                .text('-----------------------------');
+
+            // Imprimir itens da venda
+            itensVenda.forEach(item => {
+                printer
+                    .align('lt')
+                    .text(`${item.nome} x${item.quantidade}`)
+                    .text(`R$ ${item.preco} Subtotal: R$ ${item.subtotal}`);
+            });
+
+            // Imprimir total
+            printer
+                .text('-----------------------------')
+                .align('rt')
+                .text(`Total: R$ ${totalVenda}`)
+                .text('-----------------------------');
+
+            // Imprimir formas de pagamento
+            pagamento.forEach(p => {
+                printer.text(`${p.forma}: R$ ${p.valor}`);
+            });
+
+            // Finalizar impressão
+            printer
+                .text('-----------------------------')
+                .text('Obrigado pela preferência!')
+                .cut()
+                .close();
+
+            res.json({ success: true });
+        });
+    } catch (error) {
+        console.error('Erro ao imprimir o cupom:', error);
+        res.status(500).json({ success: false, message: 'Erro ao imprimir o cupom.' });
+    }
+});
 
 // Verificar tabelas
 function verificarTabelas() {
