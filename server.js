@@ -418,6 +418,104 @@ app.put('/tarefas/:id', (req, res) => {
     });
 });
 
+
+// Verificar tabelas
+function verificarTabelas() {
+    const tabelas = [
+        {
+            nome: 'estoque',
+            colunas: `
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                produto VARCHAR(100) NOT NULL,
+                codigo_barras VARCHAR(13),
+                preco_venda DECIMAL(10, 2),
+                preco_compra DECIMAL(10, 2),
+                quantidade INT NOT NULL
+            `
+        },
+        {
+            nome: 'receitas',
+            colunas: `
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                titulo VARCHAR(255) NOT NULL,
+                categoria VARCHAR(100),
+                imagem VARCHAR(255),
+                descricao TEXT,
+                ingredientes TEXT
+            `
+        },
+        {
+            nome: 'tarefas',
+            colunas: `
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tarefa VARCHAR(255) NOT NULL,
+                descricao TEXT,
+                status VARCHAR(50),
+                dataEntrega DATE,
+                dataCriacao DATE
+            `
+        },
+        {
+            nome: 'financeiro',
+            colunas: `
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                descricao VARCHAR(255) NOT NULL,
+                valor DECIMAL(10, 2) NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
+                forma_pagamento VARCHAR(50),
+                categoria VARCHAR(100),
+                data DATE NOT NULL
+            `
+        }
+    ];
+
+    tabelas.forEach((tabela) => {
+        const query = `CREATE TABLE IF NOT EXISTS ${tabela.nome} (${tabela.colunas})`;
+        db.query(query, (err) => {
+            if (err) {
+                console.error(`Erro ao verificar/criar a tabela ${tabela.nome}:`, err);
+            } else {
+                console.log(`Tabela ${tabela.nome} verificada/criada com sucesso.`);
+            }
+        });
+    });
+}
+function verificarColunas(tabela, colunas) {
+    colunas.forEach((coluna) => {
+        const query = `
+            ALTER TABLE ${tabela}
+            ADD COLUMN IF NOT EXISTS ${coluna.nome} ${coluna.tipo}
+        `;
+        db.query(query, (err) => {
+            if (err) {
+                console.error(`Erro ao verificar/adicionar a coluna ${coluna.nome} na tabela ${tabela}:`, err);
+            } else {
+                console.log(`Coluna ${coluna.nome} verificada/adicionada na tabela ${tabela}.`);
+            }
+        });
+    });
+}
+
+// Exemplo de uso
+verificarColunas('estoque', [
+    { nome: 'imagem', tipo: 'VARCHAR(255)' },
+    { nome: 'quantidade', tipo: 'INT' },
+    { nome: 'descricao', tipo: 'TEXT' },
+    { nome: 'tipo', tipo: 'VARCHAR(50)' },
+    { nome: 'data_validade', tipo: 'DATE' },
+    { nome: 'unidade', tipo: 'VARCHAR(50)' },
+    { nome: 'codigo_barras', tipo: 'VARCHAR(13)' },
+    { nome: 'preco_venda', tipo: 'DECIMAL(10, 2)' },
+    { nome: 'preco_compra', tipo: 'DECIMAL(10, 2)' }
+]);
+verificarColunas('receitas', [
+    { nome: 'imagem', tipo: 'VARCHAR(255)' },
+    { nome: 'descricao', tipo: 'TEXT' },
+    { nome: 'ingredientes', tipo: 'TEXT' }
+]);
+// Verificar e criar tabelas no banco de dados
+verificarTabelas();
+
 // Iniciar o servidor
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);

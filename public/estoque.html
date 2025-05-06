@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,6 +31,20 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+        .table-danger {
+    transition: background-color 0.3s ease;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+input:focus, select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
     </style>
 </head>
 <body>
@@ -40,35 +54,63 @@
     <div class="container mt-5">
         <h1 class="mb-4">Gestão de Estoque</h1>
 
-        <form id="estoque-form" class="mb-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <input type="text" id="produto" class="form-control" placeholder="Nome do Produto" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="number" id="quantidade" class="form-control" placeholder="Quantidade" required>
-                </div>
-                <div class="col-md-3">
-                    <select id="tipo" class="form-select" required>
-                        <option value="entrada">Entrada</option>
-                        <option value="saida">Saída</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Registrar</button>
-                </div>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Adicionar/Atualizar Produto</h5>
+                <form id="estoque-form">
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <input type="text" id="busca" class="form-control" placeholder="Buscar por nome ou código de barras">
+                        </div>
+                    </div>
+        
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" id="produto" class="form-control" placeholder="Nome do Produto" required maxlength="100">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" id="codigo_barras" class="form-control" placeholder="Código de Barras" pattern="\d{13}" maxlength="13" inputmode="numeric">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" id="preco_venda" class="form-control" placeholder="Preço de Venda" step="0.01">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" id="preco_compra" class="form-control" placeholder="Preço de Compra" step="0.01">
+                        </div>
+                        <div class="col-md-1">
+                            <input type="number" id="quantidade" class="form-control" placeholder="Qtd" required min="1" max="1000">
+                        </div>
+                        <div class="col-md-2">
+                            <select id="tipo" class="form-select" required>
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">Registrar</button>
+                        </div>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
+        
 
         <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Produto</th>
-                    <th>Quantidade</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
+            <!-- Ajuste o cabeçalho da tabela para refletir os novos campos -->
+<thead>
+    <tr>
+        <th>#</th>
+        <th>Produto</th>
+        <th>Código de Barras</th>
+        <th>Preço Venda</th>
+        <th>Preço Compra</th>
+        <th>Quantidade</th>
+        <th>Ações</th>
+    </tr>
+</thead>
+
             <tbody id="estoque-tabela">
                 <!-- Os dados do estoque serão inseridos aqui dinamicamente -->
             </tbody>
@@ -95,40 +137,59 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('estoque-form').addEventListener('submit', function(e) {
-            e.preventDefault();
 
-            const produto = document.getElementById('produto').value;
-            const quantidade = document.getElementById('quantidade').value;
-            const tipo = document.getElementById('tipo').value;
 
-            // Enviar os dados para o servidor via API
-            fetch('/api/estoque', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ produto, quantidade, tipo })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                location.reload();
-            })
-            .catch(error => console.error('Erro:', error));
-        });
 
-        // Carregar os dados do estoque ao carregar a página
-        fetch('/api/estoque')
-            .then(response => response.json())
-            .then(data => {
-                const tabela = document.getElementById('estoque-tabela');
-                tabela.innerHTML = '';
-                data.forEach((item, index) => {
+    // Atualização do envio do formulário
+document.getElementById('estoque-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const produto = document.getElementById('produto').value;
+    const codigo_barras = document.getElementById('codigo_barras').value;
+    const preco_venda = parseFloat(document.getElementById('preco_venda').value) || 0;
+    const preco_compra = parseFloat(document.getElementById('preco_compra').value) || 0.00;
+    const quantidade = parseInt(document.getElementById('quantidade').value);
+    const tipo = document.getElementById('tipo').value;
+
+    fetch('/api/estoque', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ produto, codigo_barras, preco_venda, preco_compra, quantidade, tipo })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    })
+    .catch(error => console.error('Erro:', error));
+});
+
+
+// Função para carregar e filtrar o estoque
+function carregarEstoque(filtro = '') {
+    fetch('/api/estoque')
+        .then(response => response.json())
+        .then(data => {
+            const tabela = document.getElementById('estoque-tabela');
+            tabela.innerHTML = '';
+
+            data
+                .filter(item => {
+                    const termo = filtro.toLowerCase();
+                    return (
+                        item.produto.toLowerCase().includes(termo) ||
+                        (item.codigo_barras && item.codigo_barras.includes(termo))
+                    );
+                })
+                .forEach((item, index) => {
+                    const isLowStock = item.quantidade <= 5;
                     tabela.innerHTML += `
-                        <tr>
+                        <tr class="${isLowStock ? 'table-danger' : ''}">
                             <td>${index + 1}</td>
                             <td>${item.produto}</td>
+                            <td>${item.codigo_barras || '-'}</td>
+                            <td>R$ ${item.preco_venda?.toFixed(2) || '0.00'}</td>
+                            <td>R$ ${item.preco_compra?.toFixed(2) || '0.00'}</td>
                             <td>${item.quantidade}</td>
                             <td>
                                 <button class="btn btn-warning btn-sm" onclick="openEditPopup(${item.id}, '${item.produto}', ${item.quantidade})">Editar</button>
@@ -137,7 +198,17 @@
                         </tr>
                     `;
                 });
-            });
+        });
+}
+
+// Busca automática ao digitar
+document.getElementById('busca').addEventListener('input', function () {
+    carregarEstoque(this.value);
+});
+
+// Chamar ao carregar a página
+carregarEstoque();
+
 
         function removerItem(id) {
             fetch(`/api/estoque/${id}`, {
@@ -212,9 +283,12 @@
                         <tr>
                             <td>${index + 1}</td>
                             <td>${item.produto}</td>
+                            <td>${item.codigo_barras || '-'}</td>
+                            <td>R$ ${item.preco_venda?.toFixed(2) || '0.00'}</td>
+                            <td>R$ ${item.preco_compra?.toFixed(2) || '0.00'}</td>
                             <td>${item.quantidade}</td>
                             <td>
-                                <button class="btn btn-warning btn-sm" onclick="openEditPopup(${item.id}, '${item.produto}', ${item.quantidade})">Editar</button>
+                                <button class="btn btn-warning btn-sm" onclick="openEditPopup(${item.id}, '${item.produto}', ${item.codigo_barras}, ${item.preco_venda}, ${item.preco_compra}, ${item.quantidade})">Editar</button>
                                 <button class="btn btn-danger btn-sm" onclick="removerItem(${item.id})">Remover</button>
                             </td>
                         </tr>
