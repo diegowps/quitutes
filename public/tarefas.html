@@ -13,26 +13,23 @@
 
 <body class="tarefas">
     <div id="navbar-container"></div>
-
-
-    <div class="container my-4">
-        <form id="task-form" class="d-flex gap-2">
-<<<<<<< HEAD
-            <input type="text" id="title" class="form-control" placeholder="Nova tarefa" required>
-            <input type="date" id="date" class="form-control" required>
-            <button type="submit" class="btn btn-success" id="btnCreateTarefas">Adicionar Tarefa</button>
-=======
-            <input type="text" id="task-title" class="form-control" placeholder="Título da tarefa" required>
-            <input type="date" id="task-date" class="form-control" required>
-            <button type="submit" class="btn btn-success">Adicionar Tarefa</button>
->>>>>>> VERSAO-AMANDA
-        </form>
+    <div class="text-center mb-4">
+        <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
+        <div class="container mb-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap gap-4 justify-content-center">
+                        <input type="text" id="descricaoTarefa"
+                            class="form-control form-control-lg rounded-3 descricao-input"
+                            placeholder="Descrição da nova tarefa">
+                        <input type="date" id="dataEntrega" class="form-control form-control-lg rounded-3 data-input">
+                        <button class="btn btn-primary btn-lg rounded-3"
+                            onclick="criarTarefaDireto()">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-
-    <h2 class="text-center mb-4">Tarefas da Confeitaria</h2>
-
-
     <div class="board">
         <div class="column bg-light" id="urgente">
             <div class="column-title text-danger">Urgente</div>
@@ -47,12 +44,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/dragula@3.7.3/dist/dragula.min.js"></script>
-<<<<<<< HEAD
-
+    <link href="https://unpkg.com/dragula@3.7.3/dist/dragula.min.css" rel="stylesheet" />
     <script>
         const apiUrl = 'http://localhost:5500/api/tarefas';
 
@@ -174,127 +167,11 @@
     </script>
     <script>
         fetch('navbar.html')
-          .then(response => response.text())
-          .then(data => {
-            document.getElementById('navbar-container').innerHTML = data
-          })
-      </script>
-      <script src="/server.js"></script>
-=======
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const drake = dragula([
-                document.getElementById('urgentes'),
-                document.getElementById('fazendo'),
-                document.getElementById('concluidas')
-            ]);
-
-            drake.on('drop', function (el, target) {
-                const taskId = el.dataset.id;
-                let newStatus;
-
-                if (target.id === 'urgentes') {
-                    newStatus = 'novas';
-                } else if (target.id === 'fazendo') {
-                    newStatus = 'fazendo';
-                } else if (target.id === 'concluidas') {
-                    newStatus = 'concluidas';
-                }
-
-                fetch(`/api/tarefas/${taskId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao atualizar status da tarefa.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Status atualizado:', data);
-                })
-                .catch(err => console.error('Erro ao atualizar status:', err));
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
             });
-        });
-
-        // Adicionar tarefa ao banco de dados
-        document.getElementById('task-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const title = document.getElementById('task-title').value.trim();
-            const date = document.getElementById('task-date').value;
-
-            if (title && date) {
-                fetch('/api/tarefas', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ titulo: title, data_entrega: date })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    carregarTarefas();
-                })
-                .catch(err => console.error('Erro ao adicionar tarefa:', err));
-            }
-        });
-
-        // Carregar tarefas do banco de dados
-        function carregarTarefas() {
-            fetch('/api/tarefas')
-                .then(response => response.json())
-                .then(tarefas => {
-                    const urgentes = document.getElementById('urgentes');
-                    const fazendo = document.getElementById('fazendo');
-                    const concluidas = document.getElementById('concluidas');
-
-                    urgentes.innerHTML = '';
-                    fazendo.innerHTML = '';
-                    concluidas.innerHTML = '';
-
-                    tarefas.forEach(tarefa => {
-                        const task = document.createElement('div');
-                        task.classList.add('post-it', 'p-3', 'rounded', 'shadow', 'mb-2');
-                        task.dataset.id = tarefa.id;
-                        task.innerHTML = `
-                            <strong>${tarefa.titulo}</strong><br>
-                            <small>Entrega: ${new Date(tarefa.data_entrega).toLocaleDateString()}</small>
-                        `;
-
-                        if (tarefa.status === 'novas') {
-                            task.classList.add('urgente');
-                            urgentes.appendChild(task);
-                        } else if (tarefa.status === 'fazendo') {
-                            task.classList.add('fazendo');
-                            fazendo.appendChild(task);
-                        } else if (tarefa.status === 'concluidas') {
-                            task.classList.add('concluido');
-                            concluidas.appendChild(task);
-                        }
-                    });
-                })
-                .catch(err => console.error('Erro ao carregar tarefas:', err));
-        }
-
-        // Carregar tarefas ao iniciar
-        document.addEventListener('DOMContentLoaded', carregarTarefas);
     </script>
-
-    <script>
-        fetch('navbar.html')
-          .then(response => response.text())
-          .then(data => {
-            document.getElementById('navbar-container').innerHTML = data;
-          });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
->>>>>>> VERSAO-AMANDA
 </body>
 
 </html>
