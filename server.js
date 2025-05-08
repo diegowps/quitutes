@@ -417,90 +417,104 @@ app.delete('/api/tarefas/:id', (req, res) => {
     });
 });
 
-// Verificar tabelas
-function verificarTabelas() {
-    const tabelas = [
-        {
-            nome: 'estoque',
-            colunas: `
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                produto VARCHAR(100) NOT NULL,
-                quantidade INT NOT NULL,
-                tipo ENUM('entrada', 'saida') NOT NULL,
-                codigo_barras VARCHAR(13),
-                preco_venda DECIMAL(10, 2),
-                preco_compra DECIMAL(10, 2),
-                data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                ultima_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+// // Verificar tabelas
+// function verificarTabelas() {
+//     const tabelas = [
+//         {
+//             nome: 'estoque',
+//             colunas: `
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 produto VARCHAR(100) NOT NULL,
+//                 quantidade INT NOT NULL,
+//                 tipo ENUM('entrada', 'saida') NOT NULL,
+//                 codigo_barras VARCHAR(13),
+//                 preco_venda DECIMAL(10, 2),
+//                 preco_compra DECIMAL(10, 2),
+//                 data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//                 ultima_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 
-            `
-        },
-        {
-            nome: 'receitas',
-            colunas: `
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                titulo VARCHAR(255) NOT NULL,
-                categoria VARCHAR(100),
-                imagem VARCHAR(255),
-                descricao TEXT,
-                ingredientes TEXT
-            `
-        },
-        {
-            nome: 'tarefas',
-            colunas: `
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                tarefa VARCHAR(255) NOT NULL,
-                descricao TEXT,
-                status VARCHAR(50),
-                dataEntrega DATE,
-                dataCriacao DATE
-            `
-        },
-        {
-            nome: 'financeiro',
-            colunas: `
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                descricao VARCHAR(255) NOT NULL,
-                valor DECIMAL(10, 2) NOT NULL,
-                tipo VARCHAR(50) NOT NULL,
-                forma_pagamento VARCHAR(50),
-                categoria VARCHAR(100),
-                data DATE NOT NULL
-            `
-        }
-    ];
+//             `
+//         },
+//         {
+//             nome: 'receitas',
+//             colunas: `
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 titulo VARCHAR(255) NOT NULL,
+//                 categoria VARCHAR(100),
+//                 imagem VARCHAR(255),
+//                 descricao TEXT,
+//                 ingredientes TEXT
+//             `
+//         },
+//         {
+//             nome: 'vendas_balcao',
+//             colunas: `
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 titulo VARCHAR(255) NOT NULL,
+//                 categoria VARCHAR(100),
+//                 imagem VARCHAR(255),
+//                 descricao TEXT,
+//                 ingredientes TEXT
+//             `
+//         },
+//         {
+//             nome: 'tarefas',
+//             colunas: `
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 tarefa VARCHAR(255) NOT NULL,
+//                 descricao TEXT,
+//                 status VARCHAR(50),
+//                 dataEntrega DATE,
+//                 dataCriacao DATE
+//             `
+//         },
+//         {
+//             nome: 'financeiro',
+//             colunas: `
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 descricao VARCHAR(255) NOT NULL,
+//                 valor DECIMAL(10, 2) NOT NULL,
+//                 tipo ENUM('entrada', 'saida'),
+//                 tipo VARCHAR(50) NOT NULL,
+//                 forma_pagamento VARCHAR(50),
+//                 categoria ENUM('venda', 'despesa', 'investimento', 'impostos', 'outros') NOT NULL,
+//                 data DATE NOT NULL
+//                 observacao TEXT
+//             `
+//         }
+//     ];
 
-    tabelas.forEach((tabela) => {
-        const query = `CREATE TABLE IF NOT EXISTS ${tabela.nome} (${tabela.colunas})`;
-        db.query(query, (err) => {
-            if (err) {
-                console.error(`Erro ao verificar/criar a tabela ${tabela.nome}:`, err);
-            } else {
-                console.log(`Tabela ${tabela.nome} verificada/criada com sucesso.`);
-            }
-        });
-    });
-}
-function verificarColunas(tabela, colunas) {
-    colunas.forEach((coluna) => {
-        const query = `
-            ALTER TABLE ${tabela}
-            ADD COLUMN IF NOT EXISTS ${coluna.nome} ${coluna.tipo}
-        `;
-        db.query(query, (err) => {
-            if (err) {
-                console.error(`Erro ao verificar/adicionar a coluna ${coluna.nome} na tabela ${tabela}:`, err);
-            } else {
-                console.log(`Coluna ${coluna.nome} verificada/adicionada na tabela ${tabela}.`);
-            }
-        });
-    });
-}
+//     tabelas.forEach((tabela) => {
+//         const query = `CREATE TABLE IF NOT EXISTS ${tabela.nome} (${tabela.colunas})`;
+//         db.query(query, (err) => {
+//             if (err) {
+//                 console.error(`Erro ao verificar/criar a tabela ${tabela.nome}:`, err);
+//             } else {
+//                 console.log(`Tabela ${tabela.nome} verificada/criada com sucesso.`);
+//             }
+//         });
+//     });
+// }
+// function verificarColunas(tabela, colunas) {
+//     colunas.forEach((coluna) => {
+//         const query = `
+//             ALTER TABLE ${tabela}
+//             ADD COLUMN IF NOT EXISTS ${coluna.nome} ${coluna.tipo}
+//         `;
+//         db.query(query, (err) => {
+//             if (err) {
+//                 console.error(`Erro ao verificar/adicionar a coluna ${coluna.nome} na tabela ${tabela}:`, err);
+//             } else {
+//                 console.log(`Coluna ${coluna.nome} verificada/adicionada na tabela ${tabela}.`);
+//             }
+//         });
+//     });
+// }
 
 
-    // Verificação e criação das tabelas
-    verificarTabelas();
+//     // Verificação e criação das tabelas
+//     verificarTabelas();
+
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
