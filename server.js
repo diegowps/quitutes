@@ -4,6 +4,7 @@ const path = require('path')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
+
 const app = express()
 const port = 5500
 app.use(cors())
@@ -424,7 +425,7 @@ function verificarTabelas() {
             colunas: `
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 produto VARCHAR(100) NOT NULL,
-                quantidade INT NOT NULL
+                quantidade INT NOT NULL,
                 tipo ENUM('entrada', 'saida') NOT NULL,
                 codigo_barras VARCHAR(13),
                 preco_venda DECIMAL(10, 2),
@@ -498,7 +499,8 @@ function verificarColunas(tabela, colunas) {
 }
 
 
-
+    // Verificação e criação das tabelas
+    verificarTabelas();
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
