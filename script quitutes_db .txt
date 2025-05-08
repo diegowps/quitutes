@@ -1,0 +1,54 @@
+CREATE TABLE `estoque` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `produto` varchar(100) NOT NULL,
+  `quantidade` int(11) NOT NULL,
+  `tipo` enum('entrada','saida') NOT NULL,
+  `data_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  `ultima_atualizacao` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `financeiro` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `descricao` varchar(255) DEFAULT NULL,
+  `valor` decimal(10,2) DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `tipo` enum('entrada','saida') DEFAULT NULL,
+  `forma_pagamento` enum('dinheiro','cartao_credito','cartao_debito','pix','boleto') NOT NULL,
+  `categoria` enum('venda','despesa','investimento','impostos','outros') NOT NULL,
+  `observacao` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+CREATE TABLE `movimentos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tipo` enum('entrada','saida') NOT NULL,
+  `categoria` enum('venda','despesa','investimento','impostos','outros') NOT NULL,
+  `valor` decimal(10,2) NOT NULL,
+  `data` date NOT NULL,
+  `descricao` text DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `receitas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(100) NOT NULL,
+  `categoria` enum('massas','recheios doces','recheios salgados','sobremesas') NOT NULL,
+  `descricao` text DEFAULT NULL,
+  `ingredientes` text NOT NULL,
+  `imagem` varchar(255) DEFAULT NULL,
+  `data_criacao` timestamp NOT NULL DEFAULT current_timestamp(),
+  `data_atualizacao` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE `tarefas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `descricao` varchar(255) NOT NULL,
+  `status` enum('urgente','fazendo','concluido') DEFAULT 'urgente',
+  `entrega` date NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
